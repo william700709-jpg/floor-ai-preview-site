@@ -41,6 +41,24 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
+### Zeabur 部署後端
+
+如果 Zeabur 無法正確把 `/backend` 偵測成 Python 服務，可直接使用：
+
+- [Dockerfile](/D:/gpt%20codex/backend/Dockerfile)
+- [backend/.dockerignore](/D:/gpt%20codex/backend/.dockerignore)
+
+Zeabur 後端服務建議：
+
+- Root Directory: `/backend`
+- Deploy Type: Dockerfile
+- Port: `8000`
+- Runtime Command:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
 ### 後端 API
 
 - `GET /api/v1/floor-styles`
