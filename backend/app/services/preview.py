@@ -89,6 +89,9 @@ def generate_floor_preview(
     colors: tuple[str, str, str],
     texture_scale: float = 1.0,
 ) -> None:
+    result_path.parent.mkdir(parents=True, exist_ok=True)
+    mask_path.parent.mkdir(parents=True, exist_ok=True)
+
     original = cv2.imread(str(original_path))
     if original is None:
         raise ValueError("無法讀取上傳圖片。")
@@ -119,5 +122,8 @@ def generate_floor_preview(
     alpha = (softened_mask.astype(np.float32) / 255.0)[..., None]
     result = np.clip(original * (1 - alpha) + blended * alpha, 0, 255).astype(np.uint8)
 
-    cv2.imwrite(str(result_path), result)
-    cv2.imwrite(str(mask_path), softened_mask)
+    result_written = cv2.imwrite(str(result_path), result)
+    mask_written = cv2.imwrite(str(mask_path), softened_mask)
+
+    if not result_written or not mask_written:
+        raise ValueError("Unable to write generated preview assets.")

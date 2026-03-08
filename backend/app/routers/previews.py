@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models import FloorStyle, Lead, PreviewJob
 from app.schemas import PreviewCreateIn, PreviewOut
@@ -23,8 +24,8 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
         raise HTTPException(status_code=404, detail="找不到地板花色。")
 
     ensure_storage_dirs()
-    result_path = Path("backend/storage/results") / f"{job.id}.png"
-    mask_path = Path("backend/storage/masks") / f"{job.id}.png"
+    result_path = settings.storage_root / "results" / f"{job.id}.png"
+    mask_path = settings.storage_root / "masks" / f"{job.id}.png"
 
     try:
         generate_floor_preview(
