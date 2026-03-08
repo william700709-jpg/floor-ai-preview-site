@@ -2,3 +2,7 @@
 node_modules
 .env.local
 backend/storage
+backend/.venv
+backend/__pycache__
+**/__pycache__
+*.pyc
