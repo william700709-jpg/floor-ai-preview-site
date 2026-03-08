@@ -47,6 +47,7 @@ uvicorn app.main:app --reload
 
 - [Dockerfile](/D:/gpt%20codex/backend/Dockerfile)
 - [backend/.dockerignore](/D:/gpt%20codex/backend/.dockerignore)
+- [Dockerfile.preview-api](/D:/gpt%20codex/Dockerfile.preview-api)
 
 Zeabur 後端服務建議：
 
@@ -57,6 +58,17 @@ Zeabur 後端服務建議：
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+如果你的 repo 同時有前端與後端，Zeabur 官方文件提到可使用服務名稱對應的 Dockerfile，例如：
+
+- 服務名稱：`preview-api`
+- Dockerfile：`Dockerfile.preview-api`
+
+也可以在服務環境變數加入：
+
+```bash
+ZBPACK_DOCKERFILE_NAME=preview-api
 ```
 
 ### 後端 API
