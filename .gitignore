@@ -1,7 +1,15 @@
 .next
 node_modules
 .env.local
-backend/storage
+.tmp/
+tsconfig.tsbuildinfo
+backend/.env
+backend/logs/
+fspc*.txt
+FSPC*.txt
+backend/storage/*
+!backend/storage/floor-style-groups/
+!backend/storage/floor-style-groups/**
 backend/.venv
 backend/__pycache__
 **/__pycache__

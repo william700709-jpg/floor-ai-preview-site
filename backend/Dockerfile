@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY schema.sql ./schema.sql
+COPY storage/floor-style-groups ./storage/floor-style-groups
 
 RUN mkdir -p /app/storage/uploads /app/storage/results /app/storage/masks
 

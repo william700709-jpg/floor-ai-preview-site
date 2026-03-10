@@ -1,0 +1,52 @@
+{
+  "groups": [
+    {
+      "code": "FSPC4.2",
+      "name": "FSPC 4.2mm+0.2mm 高彈性鎖扣式地板",
+      "description": "居家生活木紋系列",
+      "spec": {
+        "dimension": "7.2x48 in (182mm x 1210mm)",
+        "thickness_mm": 4.2,
+        "wear_layer_mm": 0.3,
+        "packaging": "8片 / 0.53坪裝"
+      },
+      "styles": [
+        { "code": "SF60", "name": "SF60", "source_page": 2 },
+        { "code": "SF61", "name": "SF61", "source_page": 3 },
+        { "code": "SF62", "name": "SF62", "source_page": 4 },
+        { "code": "SF63", "name": "SF63", "source_page": 5 },
+        { "code": "SF64", "name": "SF64", "source_page": 6 },
+        { "code": "SF65", "name": "SF65", "source_page": 7 },
+        { "code": "SF66", "name": "SF66", "source_page": 8 },
+        { "code": "SF67", "name": "SF67", "source_page": 9 },
+        { "code": "SF68", "name": "SF68", "source_page": 10 },
+        { "code": "SF69", "name": "SF69", "source_page": 11 },
+        { "code": "SF70", "name": "SF70", "source_page": 12 }
+      ]
+    },
+    {
+      "code": "FSPC5.0",
+      "name": "FSPC 5.0mm+0.2mm 高彈性鎖扣式地板",
+      "description": "居家生活木紋系列",
+      "spec": {
+        "dimension": "7.8x48 in (198mm x 1210mm)",
+        "thickness_mm": 5.0,
+        "wear_layer_mm": 0.5,
+        "packaging": "8片 / 0.58坪裝"
+      },
+      "styles": [
+        { "code": "Y101", "name": "Y101", "source_page": 2 },
+        { "code": "Y102", "name": "Y102", "source_page": 3 },
+        { "code": "Y103", "name": "Y103", "source_page": 4 },
+        { "code": "Y104", "name": "Y104", "source_page": 5 },
+        { "code": "Y105", "name": "Y105", "source_page": 6 },
+        { "code": "Y106", "name": "Y106", "source_page": 7 },
+        { "code": "Y107", "name": "Y107", "source_page": 8 },
+        { "code": "Y108", "name": "Y108", "source_page": 9 },
+        { "code": "Y109", "name": "Y109", "source_page": 10 },
+        { "code": "Y110", "name": "Y110", "source_page": 11 },
+        { "code": "Y111", "name": "Y111", "source_page": 12 }
+      ]
+    }
+  ]
+}
