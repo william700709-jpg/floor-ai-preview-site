@@ -80,26 +80,46 @@ def build_style_description(group: CatalogGroup) -> str:
     )
 
 
+def _style_asset_roots() -> list[Path]:
+    roots = [
+        settings.storage_root / "floor-style-groups",
+        Path("/app/storage/floor-style-groups"),
+        Path("storage/floor-style-groups"),
+        Path("backend/storage/floor-style-groups"),
+    ]
+
+    deduped: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        key = str(root)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(root)
+    return deduped
+
+
 def palette_for_style(group_code: str, index: int) -> tuple[str, str, str]:
     palette_list = GROUP_PALETTES.get(group_code, GROUP_PALETTES["FSPC4.2"])
     return palette_list[index % len(palette_list)]
 
 
 def resolve_group_cover_url(group_code: str) -> str | None:
-    base_dir = settings.storage_root / "floor-style-groups" / group_code
-    for extension in IMAGE_EXTENSIONS:
-        candidate = base_dir / f"cover{extension}"
-        if candidate.exists():
-            return f"/storage/floor-style-groups/{group_code}/cover{extension}"
+    for root in _style_asset_roots():
+        base_dir = root / group_code
+        for extension in IMAGE_EXTENSIONS:
+            candidate = base_dir / f"cover{extension}"
+            if candidate.exists():
+                return f"/storage/floor-style-groups/{group_code}/cover{extension}"
     return None
 
 
 def resolve_group_cover_path(group_code: str) -> Path | None:
-    base_dir = settings.storage_root / "floor-style-groups" / group_code
-    for extension in IMAGE_EXTENSIONS:
-        candidate = base_dir / f"cover{extension}"
-        if candidate.exists():
-            return candidate
+    for root in _style_asset_roots():
+        base_dir = root / group_code
+        for extension in IMAGE_EXTENSIONS:
+            candidate = base_dir / f"cover{extension}"
+            if candidate.exists():
+                return candidate
     return None
 
 
@@ -111,9 +131,10 @@ def resolve_style_image_url(group_code: str, style_code: str) -> str | None:
 
 
 def resolve_style_image_path(group_code: str, style_code: str) -> Path | None:
-    base_dir = settings.storage_root / "floor-style-groups" / group_code
-    for extension in IMAGE_EXTENSIONS:
-        candidate = base_dir / f"{style_code}{extension}"
-        if candidate.exists():
-            return candidate
+    for root in _style_asset_roots():
+        base_dir = root / group_code
+        for extension in IMAGE_EXTENSIONS:
+            candidate = base_dir / f"{style_code}{extension}"
+            if candidate.exists():
+                return candidate
     return None
