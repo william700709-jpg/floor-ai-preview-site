@@ -61,7 +61,7 @@ class PreviewOut(BaseModel):
     result_url: str
     mask_url: str
     note: str = Field(
-        default="此圖為模擬示意，實際效果依現場採光、空間條件與施工方式為準。"
+        default="此圖為展示版模擬結果，實際效果依現場採光、空間條件與施工方式為準。"
     )
 
 

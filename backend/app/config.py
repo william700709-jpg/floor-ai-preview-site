@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     storage_root: Path = Path("backend/storage")
     cors_origins: list[str] = ["http://127.0.0.1:3000", "http://localhost:3000"]
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-2.5-flash-image-preview"
+    gemini_model: str = "gemini-3.1-flash-image-preview"
     stock_api_key: str | None = None
     finmind_api_token: str | None = None
     finmind_rate_limit_per_hour: int = 580

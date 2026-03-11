@@ -19,16 +19,16 @@ router = APIRouter(prefix="/previews", tags=["previews"])
 def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> PreviewOut:
     job = db.get(PreviewJob, payload.upload_id)
     if not job:
-        raise HTTPException(status_code=404, detail="找不到上傳圖片。")
+        raise HTTPException(status_code=404, detail="找不到對應的上傳照片。")
 
     floor_style = db.get(FloorStyle, payload.floor_style_id)
     if not floor_style:
-        raise HTTPException(status_code=404, detail="找不到地板花色。")
+        raise HTTPException(status_code=404, detail="找不到對應的地板花色。")
 
     ensure_storage_dirs()
     result_path = settings.storage_root / "results" / f"{job.id}.png"
     mask_path = settings.storage_root / "masks" / f"{job.id}.png"
-    note = "此圖為模擬示意，實際效果依現場採光、空間條件與施工方式為準。"
+    note = "此圖為展示版模擬結果，實際效果依現場採光、空間條件與施工方式為準。"
     engine = "opencv"
 
     try:
@@ -42,6 +42,10 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
 
         style_image_path = resolve_style_image_path(floor_style.tone, floor_style.badge)
         if settings.gemini_api_key and style_image_path is not None:
+            print(
+                f"[preview] Gemini attempt job={job.id} style={floor_style.badge} "
+                f"model={settings.gemini_model}"
+            )
             try:
                 generate_gemini_floor_preview(
                     original_path=Path(job.original_image_path),
@@ -51,14 +55,11 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
                     group_code=floor_style.tone,
                     style_code=floor_style.badge,
                 )
-                note = "此圖由 Gemini AI 生成，已依選定花色重繪地板區域；實際效果仍依現場採光、空間條件與施工方式為準。"
+                note = "此圖由 Gemini AI 重繪生成，已盡量保留空間透視、人物與採光。"
                 engine = "gemini"
                 print(f"[preview] Gemini rewrite succeeded for job={job.id} style={floor_style.badge}")
             except Exception as gemini_error:
-                note = (
-                    "目前顯示展示版模擬結果；Gemini AI 重繪未成功，"
-                    "已自動退回基礎預覽模式。"
-                )
+                note = "Gemini AI 重繪未成功，已改用後端展示版模擬結果。"
                 engine = "opencv"
                 print(f"[preview] Gemini rewrite failed for job={job.id}: {gemini_error}")
         elif settings.gemini_api_key and style_image_path is None:

@@ -41,6 +41,8 @@ type PreviewResult = {
   previewUrl: string;
   originalUrl: string;
   usedFallback: boolean;
+  engine: "gemini" | "opencv" | "frontend-fallback";
+  note: string;
 };
 
 const acceptedTypes = ["image/jpeg", "image/jpg", "image/png"];
@@ -92,14 +94,13 @@ function normalizeGroups(groups: ApiFloorStyleGroup[]): FloorPreviewGroup[] {
       groupCode: style.group_code,
       groupName: style.group_name,
       imageUrl:
-        makeAbsoluteUrl(style.image_url) ??
-        getPublicStyleImageUrl(style.group_code, style.code),
+        makeAbsoluteUrl(style.image_url) ?? getPublicStyleImageUrl(style.group_code, style.code),
       colors: style.colors,
     })),
   }));
 }
 
-async function generateFallbackPreview(file: File, style: FloorPreviewStyle) {
+async function generateFallbackPreview(file: File, style: FloorPreviewStyle): Promise<PreviewResult> {
   const originalUrl = URL.createObjectURL(file);
   const imageBitmap = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
@@ -108,7 +109,7 @@ async function generateFallbackPreview(file: File, style: FloorPreviewStyle) {
   const context = canvas.getContext("2d");
 
   if (!context) {
-    throw new Error("無法建立預覽畫布。");
+    throw new Error("無法建立前端預覽畫布。");
   }
 
   context.drawImage(imageBitmap, 0, 0);
@@ -164,7 +165,21 @@ async function generateFallbackPreview(file: File, style: FloorPreviewStyle) {
     originalUrl,
     previewUrl: canvas.toDataURL("image/png"),
     usedFallback: true,
+    engine: "frontend-fallback",
+    note: "目前顯示前端展示版模擬結果。",
   };
+}
+
+function engineLabel(engine: PreviewResult["engine"]) {
+  if (engine === "gemini") {
+    return "Gemini AI 重繪版";
+  }
+
+  if (engine === "opencv") {
+    return "後端展示版模擬";
+  }
+
+  return "前端展示版模擬";
 }
 
 export function FloorPreviewStudio() {
@@ -175,7 +190,7 @@ export function FloorPreviewStudio() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PreviewResult | null>(null);
-  const [serviceMessage, setServiceMessage] = useState("正在連線地板花色服務...");
+  const [serviceMessage, setServiceMessage] = useState("正在連接後端花色與預覽服務。");
 
   useEffect(() => {
     let ignore = false;
@@ -193,11 +208,11 @@ export function FloorPreviewStudio() {
           setGroups(nextGroups);
           setSelectedGroupCode(nextGroups[0].code);
           setSelectedStyleId(nextGroups[0].styles[0]?.id ?? mockFloorPreviewStyles[0].id);
-          setServiceMessage("已連接後端花色 API，可依品項挑選花色。");
+          setServiceMessage("已連接後端花色 API。");
         }
       } catch {
         if (!ignore) {
-          setServiceMessage("後端花色 API 尚未連線，先顯示展示版花色資料。");
+          setServiceMessage("後端尚未連線，目前顯示前端展示版模擬結果。");
         }
       }
     }
@@ -209,15 +224,11 @@ export function FloorPreviewStudio() {
     };
   }, []);
 
-  const selectedGroup =
-    groups.find((group) => group.code === selectedGroupCode) ??
-    groups[0];
-
+  const selectedGroup = groups.find((group) => group.code === selectedGroupCode) ?? groups[0];
   const selectedStyle =
     selectedGroup?.styles.find((style) => style.id === selectedStyleId) ??
     selectedGroup?.styles[0] ??
     mockFloorPreviewStyles[0];
-
   const visibleStyles = useMemo(() => selectedGroup?.styles ?? [], [selectedGroup]);
 
   async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -232,7 +243,7 @@ export function FloorPreviewStudio() {
 
     if (!acceptedTypes.includes(nextFile.type)) {
       setFile(null);
-      setError("請上傳 jpg、jpeg 或 png 圖片。");
+      setError("請上傳 JPG、JPEG 或 PNG 圖片。");
       return;
     }
 
@@ -241,7 +252,7 @@ export function FloorPreviewStudio() {
 
   async function handlePreview() {
     if (!file) {
-      setError("請先上傳室內空間照片。");
+      setError("請先上傳一張室內照片。");
       return;
     }
 
@@ -289,18 +300,22 @@ export function FloorPreviewStudio() {
       const previewData = (await previewResponse.json()) as {
         result_url: string;
         original_url: string;
+        engine?: "gemini" | "opencv";
+        note?: string;
       };
 
       setResult({
         originalUrl: makeAbsoluteUrl(previewData.original_url) ?? "",
         previewUrl: makeAbsoluteUrl(previewData.result_url) ?? "",
         usedFallback: false,
+        engine: previewData.engine ?? "opencv",
+        note: previewData.note ?? "已使用後端預覽生成 API。",
       });
       setServiceMessage("已使用後端預覽生成 API。");
     } catch {
       const fallback = await generateFallbackPreview(file, selectedStyle);
       setResult(fallback);
-      setServiceMessage("後端預覽生成暫時不可用，已切換為展示版模擬結果。");
+      setServiceMessage("後端預覽暫時不可用，目前顯示前端展示版模擬結果。");
     } finally {
       setLoading(false);
     }
@@ -354,9 +369,7 @@ export function FloorPreviewStudio() {
                   setResult(null);
                 }}
                 className={`rounded-full px-5 py-3 text-sm font-medium ${
-                  selected
-                    ? "bg-stone text-white"
-                    : "bg-white text-stone ring-1 ring-stone/10 hover:bg-sand"
+                  selected ? "bg-stone text-white" : "bg-white text-stone ring-1 ring-stone/10 hover:bg-sand"
                 }`}
               >
                 {group.code}
@@ -399,11 +412,7 @@ export function FloorPreviewStudio() {
               >
                 <div className="overflow-hidden rounded-[22px] border border-stone/8 bg-sand/45">
                   {style.imageUrl ? (
-                    <img
-                      src={style.imageUrl}
-                      alt={style.name}
-                      className="aspect-square w-full object-cover"
-                    />
+                    <img src={style.imageUrl} alt={style.name} className="aspect-square w-full object-cover" />
                   ) : (
                     <div
                       className="aspect-square w-full"
@@ -416,9 +425,7 @@ export function FloorPreviewStudio() {
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-semibold text-stone">{style.name}</p>
-                    <p className="mt-1 text-sm text-stone/70">
-                      {style.badge}
-                    </p>
+                    <p className="mt-1 text-sm text-stone/70">{style.code}</p>
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs ${
@@ -428,12 +435,8 @@ export function FloorPreviewStudio() {
                     {selected ? "已選擇" : style.groupCode}
                   </span>
                 </div>
-                <p className="mt-3 text-sm leading-7 text-stone/72">
-                  {style.description}
-                </p>
-                <p className="mt-3 text-xs uppercase tracking-[0.2em] text-clay">
-                  {style.groupCode}
-                </p>
+                <p className="mt-3 text-sm leading-7 text-stone/72">{style.description}</p>
+                <p className="mt-3 text-xs uppercase tracking-[0.2em] text-clay">{style.groupCode}</p>
               </button>
             );
           })}
@@ -446,7 +449,7 @@ export function FloorPreviewStudio() {
             disabled={loading}
             className="rounded-full bg-stone px-6 py-3 text-sm font-medium text-white hover:bg-[#5b574f] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? "生成預覽中..." : "立即預覽"}
+            {loading ? "預覽生成中..." : "立即預覽"}
           </button>
           <a
             href={lineContact.href}
@@ -468,6 +471,14 @@ export function FloorPreviewStudio() {
           <p className="mt-2 text-sm leading-7 text-stone/70">
             此圖為模擬示意，實際效果依現場採光、空間條件與施工方式為準。
           </p>
+          {result ? (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <span className="rounded-full bg-sand px-4 py-2 text-xs font-semibold text-stone">
+                {engineLabel(result.engine)}
+              </span>
+              <span className="text-sm text-stone/65">{result.note}</span>
+            </div>
+          ) : null}
         </div>
 
         {result ? (
@@ -477,9 +488,7 @@ export function FloorPreviewStudio() {
               <img src={result.originalUrl} alt="原始照片" className="h-[320px] w-full rounded-[24px] object-cover" />
             </div>
             <div className="p-4">
-              <p className="mb-3 text-sm font-medium text-stone/65">
-                預覽結果{result.usedFallback ? "（展示版）" : ""}
-              </p>
+              <p className="mb-3 text-sm font-medium text-stone/65">預覽結果</p>
               <img src={result.previewUrl} alt="地板預覽結果" className="h-[320px] w-full rounded-[24px] object-cover" />
             </div>
           </div>
@@ -487,7 +496,7 @@ export function FloorPreviewStudio() {
           <div className="flex min-h-[420px] flex-col items-center justify-center px-8 text-center">
             <div className="rounded-full bg-sand px-4 py-2 text-sm font-medium text-stone">等待預覽</div>
             <p className="mt-5 max-w-md text-sm leading-7 text-stone/70">
-              上傳空間照片並挑選喜歡的品項與花色後，就能快速看到地板套用後的模擬效果。
+              上傳空間照片並選好花色後，系統就會在這裡顯示預覽結果。
             </p>
           </div>
         )}
@@ -505,9 +514,7 @@ export function FloorPreviewStudio() {
               href={result?.previewUrl ?? "#"}
               download="floor-preview.png"
               className={`rounded-full px-5 py-3 text-sm font-medium ${
-                result
-                  ? "bg-stone text-white hover:bg-[#5b574f]"
-                  : "cursor-not-allowed bg-stone/20 text-stone/45"
+                result ? "bg-stone text-white hover:bg-[#5b574f]" : "cursor-not-allowed bg-stone/20 text-stone/45"
               }`}
             >
               下載預覽圖
