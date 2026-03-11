@@ -391,42 +391,47 @@ export function FloorPreviewStudio() {
                 key={style.id}
                 type="button"
                 onClick={() => setSelectedStyleId(style.id)}
-                className={`rounded-[24px] border p-4 text-left ${
+                className={`rounded-[28px] border bg-white/85 p-4 text-left transition ${
                   selected
-                    ? "border-stone bg-stone text-white shadow-soft"
-                    : "border-stone/10 bg-white/80 text-stone hover:border-sage"
+                    ? "border-stone shadow-soft ring-2 ring-stone/20"
+                    : "border-stone/10 hover:border-sage hover:bg-white"
                 }`}
               >
-                {style.imageUrl ? (
-                  <img
-                    src={style.imageUrl}
-                    alt={style.name}
-                    className="h-28 w-full rounded-[18px] object-cover"
-                  />
-                ) : (
-                  <div
-                    className="h-28 rounded-[18px]"
-                    style={{
-                      backgroundImage: `linear-gradient(135deg, ${style.colors[0]}, ${style.colors[1]} 55%, ${style.colors[2]})`,
-                    }}
-                  />
-                )}
+                <div className="overflow-hidden rounded-[22px] border border-stone/8 bg-sand/45">
+                  {style.imageUrl ? (
+                    <img
+                      src={style.imageUrl}
+                      alt={style.name}
+                      className="aspect-square w-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="aspect-square w-full"
+                      style={{
+                        backgroundImage: `linear-gradient(135deg, ${style.colors[0]}, ${style.colors[1]} 55%, ${style.colors[2]})`,
+                      }}
+                    />
+                  )}
+                </div>
                 <div className="mt-4 flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-lg font-semibold">{style.name}</p>
-                    <p className={`mt-1 text-sm ${selected ? "text-white/70" : "text-stone/70"}`}>
-                      {style.description}
+                    <p className="text-lg font-semibold text-stone">{style.name}</p>
+                    <p className="mt-1 text-sm text-stone/70">
+                      {style.badge}
                     </p>
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs ${
-                      selected ? "bg-white/15 text-white" : "bg-sand text-stone/70"
+                      selected ? "bg-stone text-white" : "bg-sand text-stone/70"
                     }`}
                   >
-                    {style.badge}
+                    {selected ? "已選擇" : style.groupCode}
                   </span>
                 </div>
-                <p className={`mt-3 text-xs uppercase tracking-[0.2em] ${selected ? "text-white/70" : "text-clay"}`}>
+                <p className="mt-3 text-sm leading-7 text-stone/72">
+                  {style.description}
+                </p>
+                <p className="mt-3 text-xs uppercase tracking-[0.2em] text-clay">
                   {style.groupCode}
                 </p>
               </button>
