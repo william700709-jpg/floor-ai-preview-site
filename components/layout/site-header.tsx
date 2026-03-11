@@ -6,6 +6,7 @@ import { navItems } from "@/data/site";
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const headerNavItems = [...navItems, { href: "/product-info", label: "產品資訊" }];
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/60 bg-cream/85 backdrop-blur-xl">
@@ -22,7 +23,7 @@ export function SiteHeader() {
           </Link>
 
           <nav className="hidden items-center gap-1 rounded-full bg-white/70 p-1 shadow-soft md:flex">
-            {navItems.map((item) => {
+            {headerNavItems.map((item) => {
               const isActive = pathname === item.href;
 
               return (
@@ -48,7 +49,7 @@ export function SiteHeader() {
         </div>
 
         <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 md:hidden">
-          {navItems.map((item) => {
+          {headerNavItems.map((item) => {
             const isActive = pathname === item.href;
 
             return (
