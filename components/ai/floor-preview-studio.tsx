@@ -61,12 +61,20 @@ function makeAbsoluteUrl(url?: string | null) {
   return `${getApiBase().replace(/\/api\/v1$/, "")}${url}`;
 }
 
+function getPublicStyleImageUrl(groupCode: string, styleCode: string) {
+  return `/images/floor-styles/${groupCode}/${styleCode}.jpg`;
+}
+
+function getPublicGroupCoverUrl(groupCode: string) {
+  return `/images/floor-styles/${groupCode}/cover.jpg`;
+}
+
 function normalizeGroups(groups: ApiFloorStyleGroup[]): FloorPreviewGroup[] {
   return groups.map((group) => ({
     code: group.code,
     name: group.name,
     description: group.description,
-    coverUrl: makeAbsoluteUrl(group.cover_url),
+    coverUrl: makeAbsoluteUrl(group.cover_url) ?? getPublicGroupCoverUrl(group.code),
     spec: {
       dimension: group.spec.dimension,
       thicknessMm: group.spec.thickness_mm,
@@ -83,7 +91,9 @@ function normalizeGroups(groups: ApiFloorStyleGroup[]): FloorPreviewGroup[] {
       badge: style.badge,
       groupCode: style.group_code,
       groupName: style.group_name,
-      imageUrl: makeAbsoluteUrl(style.image_url),
+      imageUrl:
+        makeAbsoluteUrl(style.image_url) ??
+        getPublicStyleImageUrl(style.group_code, style.code),
       colors: style.colors,
     })),
   }));
