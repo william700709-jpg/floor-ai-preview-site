@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+import hashlib
 from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -35,20 +40,42 @@ def _style_reference_candidates(floor_style: FloorStyle) -> list[tuple[str, str]
     return deduped
 
 
+def _download_style_reference(style_image_url: str, floor_style: FloorStyle) -> Path:
+    parsed = urlparse(style_image_url)
+    suffix = Path(parsed.path).suffix.lower() or ".jpg"
+    file_hash = hashlib.sha1(style_image_url.encode("utf-8")).hexdigest()[:10]
+    style_ref_dir = settings.storage_root / "style-refs" / floor_style.tone
+    style_ref_dir.mkdir(parents=True, exist_ok=True)
+    destination = style_ref_dir / f"{floor_style.badge}-{file_hash}{suffix}"
+
+    if destination.exists():
+        return destination
+
+    request = Request(
+        style_image_url,
+        headers={"User-Agent": "CozyHomeFloorPreview/1.0"},
+        method="GET",
+    )
+    with urlopen(request, timeout=60) as response:
+        destination.write_bytes(response.read())
+
+    return destination
+
+
 @router.post("", response_model=PreviewOut)
 def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> PreviewOut:
     job = db.get(PreviewJob, payload.upload_id)
     if not job:
-        raise HTTPException(status_code=404, detail="找不到對應的上傳照片。")
+        raise HTTPException(status_code=404, detail="找不到上傳圖片。")
 
     floor_style = db.get(FloorStyle, payload.floor_style_id)
     if not floor_style:
-        raise HTTPException(status_code=404, detail="找不到對應的地板花色。")
+        raise HTTPException(status_code=404, detail="找不到指定的地板花色。")
 
     ensure_storage_dirs()
     result_path = settings.storage_root / "results" / f"{job.id}.png"
     mask_path = settings.storage_root / "masks" / f"{job.id}.png"
-    note = "此圖為展示版模擬結果，實際效果依現場採光、空間條件與施工方式為準。"
+    note = "後端展示版模擬，實際效果依現場採光、空間條件與施工方式為準。"
     engine = "opencv"
 
     try:
@@ -60,10 +87,11 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
             texture_scale=floor_style.texture_scale,
         )
 
-        style_image_path = None
+        style_image_path: Path | None = None
         selected_group_code = floor_style.tone
         selected_style_code = floor_style.badge
         attempted_refs = _style_reference_candidates(floor_style)
+
         for group_code, style_code in attempted_refs:
             candidate_path = resolve_style_image_path(group_code, style_code)
             if candidate_path is not None:
@@ -71,6 +99,16 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
                 selected_group_code = group_code
                 selected_style_code = style_code
                 break
+
+        if style_image_path is None and payload.style_image_url:
+            try:
+                style_image_path = _download_style_reference(payload.style_image_url, floor_style)
+                print(
+                    f"[preview] Downloaded remote style reference for job={job.id}: "
+                    f"{payload.style_image_url} -> {style_image_path}"
+                )
+            except Exception as remote_error:
+                print(f"[preview] Remote style reference download failed for job={job.id}: {remote_error}")
 
         if settings.gemini_api_key and style_image_path is not None:
             print(
@@ -86,17 +124,17 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
                     group_code=selected_group_code,
                     style_code=selected_style_code,
                 )
-                note = "此圖由 Gemini AI 重繪生成，已盡量保留空間透視、人物與採光。"
+                note = "Gemini AI 重繪版，已依花色參考圖重新生成較自然的地板效果。"
                 engine = "gemini"
                 print(f"[preview] Gemini rewrite succeeded for job={job.id} style={floor_style.badge}")
             except Exception as gemini_error:
-                note = "Gemini AI 重繪未成功，已改用後端展示版模擬結果。"
+                note = "Gemini AI 重繪失敗，已自動退回後端展示版模擬。"
                 engine = "opencv"
                 print(f"[preview] Gemini rewrite failed for job={job.id}: {gemini_error}")
         elif settings.gemini_api_key and style_image_path is None:
             print(
                 f"[preview] Gemini skipped for job={job.id}: style reference not found. "
-                f"attempted={attempted_refs}"
+                f"attempted={attempted_refs} style_image_url={payload.style_image_url}"
             )
         else:
             print(f"[preview] Gemini skipped for job={job.id}: Gemini API key not configured.")

@@ -51,6 +51,10 @@ function getApiBase() {
   return process.env.NEXT_PUBLIC_PREVIEW_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
 }
 
+function getApiOrigin() {
+  return getApiBase().replace(/\/api\/v1$/, "");
+}
+
 function makeAbsoluteUrl(url?: string | null) {
   if (!url) {
     return undefined;
@@ -60,7 +64,7 @@ function makeAbsoluteUrl(url?: string | null) {
     return url;
   }
 
-  return `${getApiBase().replace(/\/api\/v1$/, "")}${url}`;
+  return `${getApiOrigin()}${url}`;
 }
 
 function getPublicStyleImageUrl(groupCode: string, styleCode: string) {
@@ -69,6 +73,22 @@ function getPublicStyleImageUrl(groupCode: string, styleCode: string) {
 
 function getPublicGroupCoverUrl(groupCode: string) {
   return `/images/floor-styles/${groupCode}/cover.jpg`;
+}
+
+function browserAbsoluteUrl(url?: string) {
+  if (!url) {
+    return undefined;
+  }
+
+  if (url.startsWith("http")) {
+    return url;
+  }
+
+  if (typeof window === "undefined") {
+    return url;
+  }
+
+  return `${window.location.origin}${url}`;
 }
 
 function normalizeGroups(groups: ApiFloorStyleGroup[]): FloorPreviewGroup[] {
@@ -109,7 +129,7 @@ async function generateFallbackPreview(file: File, style: FloorPreviewStyle): Pr
   const context = canvas.getContext("2d");
 
   if (!context) {
-    throw new Error("無法建立前端預覽畫布。");
+    throw new Error("無法建立預覽畫布。");
   }
 
   context.drawImage(imageBitmap, 0, 0);
@@ -166,7 +186,7 @@ async function generateFallbackPreview(file: File, style: FloorPreviewStyle): Pr
     previewUrl: canvas.toDataURL("image/png"),
     usedFallback: true,
     engine: "frontend-fallback",
-    note: "目前顯示前端展示版模擬結果。",
+    note: "前端展示版模擬，尚未使用後端或 AI 重繪。",
   };
 }
 
@@ -190,7 +210,7 @@ export function FloorPreviewStudio() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<PreviewResult | null>(null);
-  const [serviceMessage, setServiceMessage] = useState("正在連接後端花色與預覽服務。");
+  const [serviceMessage, setServiceMessage] = useState("正在讀取後端花色資料...");
 
   useEffect(() => {
     let ignore = false;
@@ -212,7 +232,7 @@ export function FloorPreviewStudio() {
         }
       } catch {
         if (!ignore) {
-          setServiceMessage("後端尚未連線，目前顯示前端展示版模擬結果。");
+          setServiceMessage("後端花色資料暫時無法取得，目前改用前端展示版資料。");
         }
       }
     }
@@ -257,7 +277,7 @@ export function FloorPreviewStudio() {
     }
 
     if (!selectedStyle) {
-      setError("請先選擇一個地板花色。");
+      setError("請先選擇一款地板花色。");
       return;
     }
 
@@ -290,6 +310,7 @@ export function FloorPreviewStudio() {
         body: JSON.stringify({
           upload_id: uploadData.upload_id,
           floor_style_id: selectedStyle.id,
+          style_image_url: browserAbsoluteUrl(selectedStyle.imageUrl),
         }),
       });
 
@@ -315,7 +336,7 @@ export function FloorPreviewStudio() {
     } catch {
       const fallback = await generateFallbackPreview(file, selectedStyle);
       setResult(fallback);
-      setServiceMessage("後端預覽暫時不可用，目前顯示前端展示版模擬結果。");
+      setServiceMessage("後端預覽暫時無法使用，目前改為前端展示版模擬。");
     } finally {
       setLoading(false);
     }
@@ -496,7 +517,7 @@ export function FloorPreviewStudio() {
           <div className="flex min-h-[420px] flex-col items-center justify-center px-8 text-center">
             <div className="rounded-full bg-sand px-4 py-2 text-sm font-medium text-stone">等待預覽</div>
             <p className="mt-5 max-w-md text-sm leading-7 text-stone/70">
-              上傳空間照片並選好花色後，系統就會在這裡顯示預覽結果。
+              上傳空間照片並選擇花色後，就能在這裡看到原圖與預覽結果。
             </p>
           </div>
         )}
