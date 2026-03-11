@@ -29,6 +29,7 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
     result_path = settings.storage_root / "results" / f"{job.id}.png"
     mask_path = settings.storage_root / "masks" / f"{job.id}.png"
     note = "此圖為模擬示意，實際效果依現場採光、空間條件與施工方式為準。"
+    engine = "opencv"
 
     try:
         generate_floor_preview(
@@ -41,15 +42,29 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
 
         style_image_path = resolve_style_image_path(floor_style.tone, floor_style.badge)
         if settings.gemini_api_key and style_image_path is not None:
-            generate_gemini_floor_preview(
-                original_path=Path(job.original_image_path),
-                style_reference_path=style_image_path,
-                guide_preview_path=result_path,
-                output_path=result_path,
-                group_code=floor_style.tone,
-                style_code=floor_style.badge,
-            )
-            note = "此圖由 Gemini AI 生成，已依選定花色重繪地板區域；實際效果仍依現場採光、空間條件與施工方式為準。"
+            try:
+                generate_gemini_floor_preview(
+                    original_path=Path(job.original_image_path),
+                    style_reference_path=style_image_path,
+                    guide_preview_path=result_path,
+                    output_path=result_path,
+                    group_code=floor_style.tone,
+                    style_code=floor_style.badge,
+                )
+                note = "此圖由 Gemini AI 生成，已依選定花色重繪地板區域；實際效果仍依現場採光、空間條件與施工方式為準。"
+                engine = "gemini"
+                print(f"[preview] Gemini rewrite succeeded for job={job.id} style={floor_style.badge}")
+            except Exception as gemini_error:
+                note = (
+                    "目前顯示展示版模擬結果；Gemini AI 重繪未成功，"
+                    "已自動退回基礎預覽模式。"
+                )
+                engine = "opencv"
+                print(f"[preview] Gemini rewrite failed for job={job.id}: {gemini_error}")
+        elif settings.gemini_api_key and style_image_path is None:
+            print(f"[preview] Gemini skipped for job={job.id}: style reference not found.")
+        else:
+            print(f"[preview] Gemini skipped for job={job.id}: Gemini API key not configured.")
     except Exception as error:
         job.status = "failed"
         job.error_message = str(error)
@@ -80,6 +95,7 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
     return PreviewOut(
         job_id=job.id,
         status=job.status,
+        engine=engine,
         original_url=build_public_url(job.original_image_path),
         result_url=build_public_url(result_path),
         mask_url=build_public_url(mask_path),

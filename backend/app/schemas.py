@@ -56,6 +56,7 @@ class PreviewCreateIn(BaseModel):
 class PreviewOut(BaseModel):
     job_id: str
     status: str
+    engine: str = "opencv"
     original_url: str
     result_url: str
     mask_url: str
