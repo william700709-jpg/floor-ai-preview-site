@@ -1,4 +1,6 @@
 .venv
 __pycache__
 *.pyc
-storage
+storage/*
+!storage/floor-style-groups/
+!storage/floor-style-groups/**
