@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PageHero } from "@/components/layout/page-hero";
 
@@ -13,6 +14,35 @@ type ProductSection = {
   table?: string[][];
   bullets?: string[];
 };
+
+const seriesHighlights = [
+  {
+    code: "FSPC4.2",
+    title: "輕巧翻新款",
+    image: "/images/product-info/fspc42-cover.jpg",
+    spec: "182 x 1210 mm / 4.2 mm / 0.3 mm / 8片 0.53坪",
+    summary:
+      "適合臥室、出租屋與一般住宅翻新，預算控制更靈活，施工速度也很適合短工期案件。",
+    samples: [
+      { code: "SF60", image: "/images/product-info/fspc42-sf60.jpg" },
+      { code: "SF64", image: "/images/product-info/fspc42-sf64.jpg" },
+      { code: "SF68", image: "/images/product-info/fspc42-sf68.jpg" },
+    ],
+  },
+  {
+    code: "FSPC5.0",
+    title: "厚實耐用款",
+    image: "/images/product-info/fspc50-cover.jpg",
+    spec: "198 x 1210 mm / 5.0 mm / 0.5 mm / 8片 0.58坪",
+    summary:
+      "更適合客廳主空間、接待區與高使用頻率場域，腳感更扎實，耐磨層也更高。",
+    samples: [
+      { code: "Y101", image: "/images/product-info/fspc50-y101.jpg" },
+      { code: "Y105", image: "/images/product-info/fspc50-y105.jpg" },
+      { code: "Y109", image: "/images/product-info/fspc50-y109.jpg" },
+    ],
+  },
+];
 
 const productSections: ProductSection[] = [
   {
@@ -50,7 +80,7 @@ const productSections: ProductSection[] = [
     id: "features",
     title: "產品亮點",
     intro:
-      "綜合 FSPC 產品目錄內容與市面上常見 SPC / FSPC 地板產品頁架構，這些是最適合放上網站的核心賣點。",
+      "綜合 FSPC 產品目錄內容與市面上常見 SPC / FSPC 地板產品頁架構，以下是最適合放上網站的核心賣點。",
     bullets: [
       "石塑結構穩定性高，較不易因日常溫濕度變化而產生明顯變形，適合台灣常見住宅使用情境。",
       "表層具耐磨層設計，可應付日常走動、餐椅推拉與一般家庭活動，維持整體地板美觀度。",
@@ -110,10 +140,13 @@ const productSections: ProductSection[] = [
   },
 ];
 
-const rightNav = productSections.map((section) => ({
-  id: section.id,
-  label: section.title,
-}));
+const rightNav = [
+  { id: "series", label: "系列精選" },
+  ...productSections.map((section) => ({
+    id: section.id,
+    label: section.title,
+  })),
+];
 
 export default function ProductInfoPage() {
   return (
@@ -142,6 +175,71 @@ export default function ProductInfoPage() {
       <section className="pb-20">
         <div className="container-shell grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="space-y-6">
+            <article id="series" className="card-surface p-7 sm:p-8">
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-clay">Series</p>
+              <h2 className="mt-3 text-3xl font-semibold text-stone">系列精選</h2>
+              <p className="mt-4 text-sm leading-8 text-stone/75">
+                先從品項理解差異，再往下看規格、施工與保養資訊，會更容易判斷哪個系列適合你的空間。
+              </p>
+
+              <div className="mt-6 grid gap-6 xl:grid-cols-2">
+                {seriesHighlights.map((series) => (
+                  <div
+                    key={series.code}
+                    className="overflow-hidden rounded-[28px] border border-stone/10 bg-white/70"
+                  >
+                    <div className="grid gap-5 p-5">
+                      <div className="overflow-hidden rounded-[24px] bg-sand/60">
+                        <Image
+                          src={series.image}
+                          alt={`${series.code} 系列封面`}
+                          width={1200}
+                          height={720}
+                          className="h-52 w-full object-cover"
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-2xl font-semibold text-stone">{series.code}</p>
+                            <p className="text-sm font-medium text-clay">{series.title}</p>
+                          </div>
+                          <span className="rounded-full bg-sage/20 px-3 py-1 text-xs font-semibold text-stone">
+                            DM 精選
+                          </span>
+                        </div>
+
+                        <p className="rounded-[18px] bg-sand/60 px-4 py-3 text-sm leading-7 text-stone/80">
+                          {series.spec}
+                        </p>
+                        <p className="text-sm leading-7 text-stone/75">{series.summary}</p>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3">
+                        {series.samples.map((sample) => (
+                          <div key={sample.code} className="space-y-2">
+                            <div className="overflow-hidden rounded-[18px] border border-stone/10 bg-sand/45">
+                              <Image
+                                src={sample.image}
+                                alt={`${series.code} ${sample.code} 花色`}
+                                width={520}
+                                height={520}
+                                className="aspect-square w-full object-cover"
+                              />
+                            </div>
+                            <p className="text-center text-xs font-semibold tracking-[0.14em] text-stone/70">
+                              {sample.code}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </article>
+
             {productSections.map((section) => (
               <article key={section.id} id={section.id} className="card-surface p-7 sm:p-8">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-clay">
