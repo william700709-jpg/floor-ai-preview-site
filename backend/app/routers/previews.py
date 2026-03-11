@@ -7,6 +7,8 @@ from app.config import settings
 from app.database import get_db
 from app.models import FloorStyle, Lead, PreviewJob
 from app.schemas import PreviewCreateIn, PreviewOut
+from app.services.floor_style_catalog import resolve_style_image_path
+from app.services.gemini_preview import generate_gemini_floor_preview
 from app.services.preview import generate_floor_preview
 from app.services.storage import build_public_url, ensure_storage_dirs
 
@@ -26,6 +28,7 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
     ensure_storage_dirs()
     result_path = settings.storage_root / "results" / f"{job.id}.png"
     mask_path = settings.storage_root / "masks" / f"{job.id}.png"
+    note = "此圖為模擬示意，實際效果依現場採光、空間條件與施工方式為準。"
 
     try:
         generate_floor_preview(
@@ -35,6 +38,18 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
             colors=(floor_style.primary_color, floor_style.secondary_color, floor_style.accent_color),
             texture_scale=floor_style.texture_scale,
         )
+
+        style_image_path = resolve_style_image_path(floor_style.tone, floor_style.badge)
+        if settings.gemini_api_key and style_image_path is not None:
+            generate_gemini_floor_preview(
+                original_path=Path(job.original_image_path),
+                style_reference_path=style_image_path,
+                guide_preview_path=result_path,
+                output_path=result_path,
+                group_code=floor_style.tone,
+                style_code=floor_style.badge,
+            )
+            note = "此圖由 Gemini AI 生成，已依選定花色重繪地板區域；實際效果仍依現場採光、空間條件與施工方式為準。"
     except Exception as error:
         job.status = "failed"
         job.error_message = str(error)
@@ -68,4 +83,5 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
         original_url=build_public_url(job.original_image_path),
         result_url=build_public_url(result_path),
         mask_url=build_public_url(mask_path),
+        note=note,
     )

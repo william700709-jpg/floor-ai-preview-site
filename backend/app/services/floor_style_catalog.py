@@ -94,10 +94,26 @@ def resolve_group_cover_url(group_code: str) -> str | None:
     return None
 
 
+def resolve_group_cover_path(group_code: str) -> Path | None:
+    base_dir = settings.storage_root / "floor-style-groups" / group_code
+    for extension in IMAGE_EXTENSIONS:
+        candidate = base_dir / f"cover{extension}"
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def resolve_style_image_url(group_code: str, style_code: str) -> str | None:
+    image_path = resolve_style_image_path(group_code, style_code)
+    if image_path is None:
+        return None
+    return f"/storage/floor-style-groups/{group_code}/{image_path.name}"
+
+
+def resolve_style_image_path(group_code: str, style_code: str) -> Path | None:
     base_dir = settings.storage_root / "floor-style-groups" / group_code
     for extension in IMAGE_EXTENSIONS:
         candidate = base_dir / f"{style_code}{extension}"
         if candidate.exists():
-            return f"/storage/floor-style-groups/{group_code}/{style_code}{extension}"
+            return candidate
     return None
