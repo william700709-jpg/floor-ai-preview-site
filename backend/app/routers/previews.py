@@ -15,6 +15,26 @@ from app.services.storage import build_public_url, ensure_storage_dirs
 router = APIRouter(prefix="/previews", tags=["previews"])
 
 
+def _style_reference_candidates(floor_style: FloorStyle) -> list[tuple[str, str]]:
+    candidates: list[tuple[str, str]] = []
+
+    if floor_style.tone and floor_style.badge:
+        candidates.append((floor_style.tone, floor_style.badge))
+
+    if "-" in floor_style.key:
+        group_code, style_code = floor_style.key.rsplit("-", 1)
+        candidates.append((group_code.upper(), style_code.upper()))
+
+    deduped: list[tuple[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for candidate in candidates:
+        normalized = (candidate[0].strip(), candidate[1].strip())
+        if normalized not in seen:
+            seen.add(normalized)
+            deduped.append(normalized)
+    return deduped
+
+
 @router.post("", response_model=PreviewOut)
 def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> PreviewOut:
     job = db.get(PreviewJob, payload.upload_id)
@@ -40,11 +60,22 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
             texture_scale=floor_style.texture_scale,
         )
 
-        style_image_path = resolve_style_image_path(floor_style.tone, floor_style.badge)
+        style_image_path = None
+        selected_group_code = floor_style.tone
+        selected_style_code = floor_style.badge
+        attempted_refs = _style_reference_candidates(floor_style)
+        for group_code, style_code in attempted_refs:
+            candidate_path = resolve_style_image_path(group_code, style_code)
+            if candidate_path is not None:
+                style_image_path = candidate_path
+                selected_group_code = group_code
+                selected_style_code = style_code
+                break
+
         if settings.gemini_api_key and style_image_path is not None:
             print(
                 f"[preview] Gemini attempt job={job.id} style={floor_style.badge} "
-                f"model={settings.gemini_model}"
+                f"model={settings.gemini_model} reference={style_image_path}"
             )
             try:
                 generate_gemini_floor_preview(
@@ -52,8 +83,8 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
                     style_reference_path=style_image_path,
                     guide_preview_path=result_path,
                     output_path=result_path,
-                    group_code=floor_style.tone,
-                    style_code=floor_style.badge,
+                    group_code=selected_group_code,
+                    style_code=selected_style_code,
                 )
                 note = "此圖由 Gemini AI 重繪生成，已盡量保留空間透視、人物與採光。"
                 engine = "gemini"
@@ -63,7 +94,10 @@ def create_preview(payload: PreviewCreateIn, db: Session = Depends(get_db)) -> P
                 engine = "opencv"
                 print(f"[preview] Gemini rewrite failed for job={job.id}: {gemini_error}")
         elif settings.gemini_api_key and style_image_path is None:
-            print(f"[preview] Gemini skipped for job={job.id}: style reference not found.")
+            print(
+                f"[preview] Gemini skipped for job={job.id}: style reference not found. "
+                f"attempted={attempted_refs}"
+            )
         else:
             print(f"[preview] Gemini skipped for job={job.id}: Gemini API key not configured.")
     except Exception as error:
