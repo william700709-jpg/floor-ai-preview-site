@@ -114,11 +114,11 @@ export const curtainOptions = {
 export const contactDetails = [
   { label: "服務時間", value: "週一至週六 10:00 - 19:00" },
   { label: "服務區域", value: "雙北、桃園、新竹可安排丈量" },
-  { label: "LINE 諮詢", value: "@cozyhome.tw" },
-  { label: "聯絡電話", value: "02-1234-5678" }
+  { label: "LINE 諮詢", value: "@089einyk" },
+  { label: "聯絡電話", value: "0913554149" }
 ];
 
 export const lineContact = {
-  id: "@cozyhome.tw",
-  href: "https://line.me/R/ti/p/@cozyhome.tw"
+  id: "@089einyk",
+  href: "https://line.me/R/ti/p/@089einyk"
 };
