@@ -1,4 +1,4 @@
-import { mkdir, appendFile } from "node:fs/promises";
+import { mkdir, appendFile, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 export type ContactPayload = {
@@ -77,4 +77,33 @@ export async function appendLocalLead(payload: NormalizedContactPayload) {
   await mkdir(leadsDir, { recursive: true });
   await appendFile(leadsFile, `${JSON.stringify(payload)}\n`, "utf8");
   return leadsFile;
+}
+
+export async function readLocalLeads(): Promise<NormalizedContactPayload[]> {
+  const leadsFile = path.join(process.cwd(), "data", "submissions", "contact-leads.ndjson");
+
+  try {
+    const raw = await readFile(leadsFile, "utf8");
+    return raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => JSON.parse(line) as NormalizedContactPayload)
+      .reverse();
+  } catch {
+    return [];
+  }
+}
+
+export async function deleteLocalLead(reference: string) {
+  const leadsDir = path.join(process.cwd(), "data", "submissions");
+  const leadsFile = path.join(leadsDir, "contact-leads.ndjson");
+  const leads = await readLocalLeads();
+  const nextLeads = leads.filter((item) => item.reference !== reference).reverse();
+  await mkdir(leadsDir, { recursive: true });
+  await writeFile(
+    leadsFile,
+    nextLeads.map((item) => JSON.stringify(item)).join("\n") + (nextLeads.length > 0 ? "\n" : ""),
+    "utf8"
+  );
 }

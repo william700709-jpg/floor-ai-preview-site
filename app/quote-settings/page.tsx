@@ -1,3 +1,4 @@
+import { ContactLeadsManager } from "@/components/forms/contact-leads-manager";
 import { QuoteFormulaSettings } from "@/components/forms/quote-formula-settings";
 import { QuoteHistoryManager } from "@/components/forms/quote-history-manager";
 import { PageHero } from "@/components/layout/page-hero";
@@ -15,6 +16,7 @@ export default function QuoteSettingsPage() {
         <div className="container-shell space-y-10">
           <QuoteFormulaSettings />
           <QuoteHistoryManager />
+          <ContactLeadsManager />
         </div>
       </section>
     </>

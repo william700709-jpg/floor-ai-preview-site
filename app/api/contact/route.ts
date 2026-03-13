@@ -23,18 +23,24 @@ export async function POST(request: Request) {
   }
 
   try {
-    const delivery = await sendToGoogleSheetsWebhook(payload);
+    const localPath = await appendLocalLead(payload);
+    console.info("Stored contact request locally", {
+      reference: payload.reference,
+      localPath
+    });
 
-    if (!delivery.delivered) {
-      const localPath = await appendLocalLead(payload);
-      console.info("Stored contact request locally", {
+    try {
+      const delivery = await sendToGoogleSheetsWebhook(payload);
+      if (delivery.delivered) {
+        console.info("Delivered contact request to webhook", {
+          reference: payload.reference,
+          channel: delivery.channel
+        });
+      }
+    } catch (deliveryError) {
+      console.error("Webhook delivery failed, but local record is preserved", {
         reference: payload.reference,
-        localPath
-      });
-    } else {
-      console.info("Delivered contact request to webhook", {
-        reference: payload.reference,
-        channel: delivery.channel
+        error: deliveryError
       });
     }
 
@@ -43,14 +49,14 @@ export async function POST(request: Request) {
       reference
     });
   } catch (error) {
-    console.error("Contact request delivery failed", {
+    console.error("Contact request storage failed", {
       reference: payload.reference,
       error
     });
 
     return NextResponse.json(
       {
-        message: "表單已收到，但外部收單服務暫時異常，請稍後再試。"
+        message: "表單暫時無法儲存，請稍後再試。"
       },
       { status: 502 }
     );
