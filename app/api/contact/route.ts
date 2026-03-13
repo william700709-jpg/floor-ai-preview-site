@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import {
-  appendLocalLead,
   normalizeContactPayload,
   sendToGoogleSheetsWebhook,
   validateContactPayload,
   type ContactPayload
 } from "@/lib/contact";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_PREVIEW_API_BASE_URL;
 
 export async function POST(request: Request) {
   const body = (await request.json()) as ContactPayload;
@@ -23,11 +24,33 @@ export async function POST(request: Request) {
   }
 
   try {
-    const localPath = await appendLocalLead(payload);
-    console.info("Stored contact request locally", {
-      reference: payload.reference,
-      localPath
+    if (!API_BASE_URL) {
+      throw new Error("缺少 NEXT_PUBLIC_PREVIEW_API_BASE_URL");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/contact-requests`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        reference: payload.reference,
+        name: payload.name,
+        phone: payload.phone,
+        line_id: payload.lineId || null,
+        request_type: payload.requestType,
+        installation_address: payload.installationAddress || null,
+        size_info: payload.sizeInfo || null,
+        message: payload.message,
+        source: payload.source
+      }),
+      cache: "no-store"
     });
+
+    if (!response.ok) {
+      const errorPayload = (await response.json().catch(() => null)) as { detail?: string } | null;
+      throw new Error(errorPayload?.detail ?? "表單暫時無法儲存，請稍後再試。");
+    }
 
     try {
       const delivery = await sendToGoogleSheetsWebhook(payload);

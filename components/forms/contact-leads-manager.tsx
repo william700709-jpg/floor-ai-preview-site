@@ -8,6 +8,7 @@ type ContactLead = {
   phone: string;
   lineId: string;
   requestType: string;
+  installationAddress: string;
   sizeInfo: string;
   message: string;
   source: string;
@@ -34,7 +35,18 @@ export function ContactLeadsManager() {
 
         const payload: { items: ContactLead[] } = await response.json();
         if (active) {
-          setItems(payload.items);
+          setItems(
+            payload.items.map((item) => ({
+              ...item,
+              lineId: (item as ContactLead & { line_id?: string }).line_id ?? item.lineId ?? "",
+              requestType: (item as ContactLead & { request_type?: string }).request_type ?? item.requestType,
+              installationAddress:
+                (item as ContactLead & { installation_address?: string }).installation_address ??
+                item.installationAddress ??
+                "",
+              sizeInfo: (item as ContactLead & { size_info?: string }).size_info ?? item.sizeInfo ?? "",
+            }))
+          );
         }
       } catch (loadError) {
         if (active) {
@@ -115,6 +127,7 @@ export function ContactLeadsManager() {
                       <p className="mt-1 text-sm text-stone/65">
                         {item.requestType} / {item.sizeInfo || "未填空間資訊"}
                       </p>
+                      <p className="mt-1 text-sm text-stone/65">{item.installationAddress || "未填地址"}</p>
                     </div>
 
                     <div className="flex flex-wrap gap-3">
@@ -149,6 +162,10 @@ export function ContactLeadsManager() {
                       <div>
                         <p className="text-xs uppercase tracking-[0.2em] text-clay">建立時間</p>
                         <p className="mt-1">{item.createdAt}</p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <p className="text-xs uppercase tracking-[0.2em] text-clay">地址</p>
+                        <p className="mt-1">{item.installationAddress || "-"}</p>
                       </div>
                       <div className="sm:col-span-2">
                         <p className="text-xs uppercase tracking-[0.2em] text-clay">需求說明</p>

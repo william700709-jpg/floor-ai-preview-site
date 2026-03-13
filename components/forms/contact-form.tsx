@@ -13,6 +13,7 @@ type FormState = {
   phone: string;
   lineId: string;
   requestType: string;
+  installationAddress: string;
   sizeInfo: string;
   message: string;
 };
@@ -22,6 +23,7 @@ const initialState: FormState = {
   phone: "",
   lineId: "",
   requestType: "整體規劃",
+  installationAddress: "",
   sizeInfo: "",
   message: ""
 };
@@ -127,6 +129,15 @@ export function ContactForm({ source, title, compact = false }: ContactFormProps
             <option>整體規劃</option>
             <option>到府丈量</option>
           </select>
+        </label>
+        <label className="text-sm text-stone/70">
+          地址
+          <input
+            value={form.installationAddress}
+            onChange={(event) => updateField("installationAddress", event.target.value)}
+            placeholder="請輸入安裝地址或社區名稱"
+            className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 outline-none focus:border-sage"
+          />
         </label>
         <label className="text-sm text-stone/70">
           空間資訊

@@ -7,6 +7,7 @@ from sqlalchemy import text
 
 from app.config import settings
 from app.database import Base, SessionLocal, engine
+from app.routers.contact_requests import router as contact_requests_router
 from app.routers.floor_styles import router as floor_styles_router
 from app.routers.leads import router as leads_router
 from app.routers.previews import router as previews_router
@@ -46,6 +47,7 @@ app.add_middleware(
 app.mount("/storage", StaticFiles(directory=settings.storage_root), name="storage")
 
 app.include_router(floor_styles_router, prefix=settings.api_prefix)
+app.include_router(contact_requests_router, prefix=settings.api_prefix)
 app.include_router(uploads_router, prefix=settings.api_prefix)
 app.include_router(previews_router, prefix=settings.api_prefix)
 app.include_router(leads_router, prefix=settings.api_prefix)

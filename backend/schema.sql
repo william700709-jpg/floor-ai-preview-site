@@ -35,6 +35,20 @@ CREATE TABLE IF NOT EXISTS leads (
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS contact_requests (
+  id VARCHAR(36) PRIMARY KEY,
+  reference VARCHAR(30) UNIQUE NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  phone VARCHAR(60) NOT NULL,
+  line_id VARCHAR(120),
+  request_type VARCHAR(80) NOT NULL,
+  installation_address TEXT,
+  size_info VARCHAR(160),
+  message TEXT NOT NULL,
+  source VARCHAR(40) NOT NULL DEFAULT 'unknown',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS quote_products (
   id SERIAL PRIMARY KEY,
   category VARCHAR(20) NOT NULL,

@@ -84,6 +84,36 @@ class LeadOut(BaseModel):
     created_at: datetime
 
 
+class ContactRequestCreateIn(BaseModel):
+    reference: str = Field(min_length=1, max_length=30)
+    name: str = Field(min_length=1, max_length=120)
+    phone: str = Field(min_length=1, max_length=60)
+    line_id: str | None = None
+    request_type: str = Field(min_length=1, max_length=80)
+    installation_address: str | None = None
+    size_info: str | None = None
+    message: str = Field(min_length=1)
+    source: str = Field(default="unknown", max_length=40)
+
+
+class ContactRequestOut(BaseModel):
+    id: str
+    reference: str
+    name: str
+    phone: str
+    line_id: str | None
+    request_type: str
+    installation_address: str | None
+    size_info: str | None
+    message: str
+    source: str
+    created_at: datetime
+
+
+class ContactRequestListOut(BaseModel):
+    items: list[ContactRequestOut]
+
+
 class QuoteProductOut(BaseModel):
     id: int
     category: str

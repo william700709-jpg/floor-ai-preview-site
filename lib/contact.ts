@@ -6,6 +6,7 @@ export type ContactPayload = {
   phone?: string;
   lineId?: string;
   requestType?: string;
+  installationAddress?: string;
   sizeInfo?: string;
   message?: string;
   source?: string;
@@ -17,6 +18,7 @@ export type NormalizedContactPayload = {
   phone: string;
   lineId: string;
   requestType: string;
+  installationAddress: string;
   sizeInfo: string;
   message: string;
   source: string;
@@ -33,6 +35,7 @@ export function normalizeContactPayload(
     phone: payload.phone?.trim() ?? "",
     lineId: payload.lineId?.trim() ?? "",
     requestType: payload.requestType?.trim() ?? "整體規劃",
+    installationAddress: payload.installationAddress?.trim() ?? "",
     sizeInfo: payload.sizeInfo?.trim() ?? "",
     message: payload.message?.trim() ?? "",
     source: payload.source?.trim() ?? "unknown",

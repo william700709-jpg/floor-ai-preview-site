@@ -63,6 +63,22 @@ class Lead(Base):
     preview_job: Mapped[PreviewJob | None] = relationship(back_populates="leads")
 
 
+class ContactRequest(Base):
+    __tablename__ = "contact_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    reference: Mapped[str] = mapped_column(String(30), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str] = mapped_column(String(60))
+    line_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    request_type: Mapped[str] = mapped_column(String(80))
+    installation_address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    size_info: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    message: Mapped[str] = mapped_column(Text)
+    source: Mapped[str] = mapped_column(String(40), default="unknown")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
 class QuoteProduct(Base):
     __tablename__ = "quote_products"
 
