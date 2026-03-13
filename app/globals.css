@@ -41,3 +41,119 @@ textarea {
 .card-surface {
   @apply rounded-[28px] border border-white/70 bg-white/80 shadow-soft backdrop-blur;
 }
+
+@page {
+  size: A4;
+  margin: 6mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  header,
+  footer {
+    display: none !important;
+  }
+
+  main {
+    padding: 0 !important;
+  }
+
+  .container-shell {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .quote-document {
+    padding: 0 !important;
+  }
+
+  .quote-document .quote-sheet {
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  .quote-document .quote-sheet > * + * {
+    margin-top: 8px !important;
+  }
+
+  .quote-document .quote-print-optional {
+    display: none !important;
+  }
+
+  .quote-document .card-surface {
+    border: 1px solid rgba(113, 95, 83, 0.12) !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .quote-document .quote-card {
+    padding: 10px !important;
+    break-inside: avoid;
+  }
+
+  .quote-document .quote-meta-grid,
+  .quote-document .quote-bottom-grid {
+    gap: 8px !important;
+  }
+
+  .quote-document .quote-meta-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .quote-document .quote-meta-grid-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .quote-document .quote-bottom-grid {
+    grid-template-columns: minmax(0, 1fr) 270px !important;
+    align-items: start !important;
+  }
+
+  .quote-document .quote-line-items th,
+  .quote-document .quote-line-items td {
+    padding: 6px !important;
+    font-size: 15px !important;
+    line-height: 1.25 !important;
+  }
+
+  .quote-document .quote-notes {
+    font-size: 10px !important;
+    line-height: 1.4 !important;
+  }
+
+  .quote-document .quote-notes > div + div {
+    margin-top: 4px !important;
+  }
+
+  .quote-document .quote-totals-card {
+    color: #3d342f !important;
+  }
+
+  .quote-document .quote-totals-card p {
+    color: inherit !important;
+  }
+
+  .quote-document .quote-totals-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .quote-document .quote-total-box {
+    border: 1px solid rgba(113, 95, 83, 0.14) !important;
+    background: #f7f1e8 !important;
+    color: #3d342f !important;
+    padding: 10px !important;
+    break-inside: avoid;
+  }
+
+  .quote-document .quote-total-box-accent {
+    background: #d8c2a8 !important;
+    color: #3d342f !important;
+  }
+}

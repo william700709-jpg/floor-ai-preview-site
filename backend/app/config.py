@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +21,20 @@ class Settings(BaseSettings):
         env_prefix="PREVIEW_",
         extra="ignore",
     )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, value: list[str] | str) -> list[str]:
+        if isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return ["http://127.0.0.1:3000", "http://localhost:3000"]
+            if stripped.startswith("["):
+                return [item.strip().strip('"') for item in stripped.strip("[]").split(",") if item.strip()]
+            return [item.strip() for item in stripped.split(",") if item.strip()]
+        return ["http://127.0.0.1:3000", "http://localhost:3000"]
 
 
 settings = Settings()

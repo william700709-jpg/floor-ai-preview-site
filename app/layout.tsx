@@ -13,8 +13,8 @@ const notoSansTC = Noto_Sans_TC({
 });
 
 export const metadata: Metadata = {
-  title: "暖居空間 | 地板與窗簾報價網站",
-  description: "提供地板與窗簾的風格規劃、快速估價與案例展示。"
+  title: "暖居空間 | 線上報價網站",
+  description: "提供地板與窗簾的風格規劃、線上報價與案例展示。"
 };
 
 export default function RootLayout({

@@ -164,10 +164,10 @@ export default function ProductInfoPage() {
             立即 AI 預覽
           </Link>
           <Link
-            href="/floor-quote"
+            href="/curtain-quote"
             className="rounded-full bg-white px-5 py-3 text-sm font-medium text-stone ring-1 ring-stone/10 hover:bg-sand"
           >
-            前往地板估價
+            前往線上報價
           </Link>
         </div>
       </PageHero>

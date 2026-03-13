@@ -1,8 +1,7 @@
 export const navItems = [
   { href: "/", label: "首頁" },
-  { href: "/floor-quote", label: "地板估價" },
+  { href: "/curtain-quote", label: "線上報價" },
   { href: "/floor-ai-preview", label: "AI 地板預覽" },
-  { href: "/curtain-quote", label: "窗簾估價" },
   { href: "/projects", label: "案例作品" },
   { href: "/about", label: "關於我們" },
   { href: "/contact", label: "聯絡我們" }

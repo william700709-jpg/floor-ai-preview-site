@@ -84,6 +84,108 @@ class LeadOut(BaseModel):
     created_at: datetime
 
 
+class QuoteProductOut(BaseModel):
+    id: int
+    category: str
+    form: str
+    code: str
+    name: str
+    unit_label: str
+    price_per_square_meter: float
+    fullness_factor: float
+    rail_price_per_meter: float
+    labor_price: float
+    minimum_charge: float
+
+
+class QuoteFormulaSettingOut(BaseModel):
+    id: int
+    form: str
+    display_name: str
+    material_unit_price_default: float
+    discount_rate: float | None
+    rail_price_per_chi: float | None
+    labor_price: float | None
+    fabric_width_chi: float | None
+    minimum_billable_talents: int | None
+
+
+class QuoteFormulaSettingUpdateIn(BaseModel):
+    form: str
+    material_unit_price_default: float = Field(gt=0)
+    discount_rate: float | None = Field(default=None, ge=0, le=1)
+    rail_price_per_chi: float | None = Field(default=None, ge=0)
+    labor_price: float | None = Field(default=None, ge=0)
+    fabric_width_chi: float | None = Field(default=None, gt=0)
+    minimum_billable_talents: int | None = Field(default=None, ge=0)
+
+
+class QuoteFormulaSettingListOut(BaseModel):
+    items: list[QuoteFormulaSettingOut]
+
+
+class QuoteFormulaSettingSaveIn(BaseModel):
+    items: list[QuoteFormulaSettingUpdateIn] = Field(min_length=1)
+
+
+class QuoteItemCreateIn(BaseModel):
+    product_id: int
+    location_name: str | None = None
+    custom_model: str | None = None
+    material_unit_price: float | None = Field(default=None, gt=0)
+    width_cm: float = Field(default=0, ge=0)
+    height_cm: float = Field(default=0, ge=0)
+    quantity: int = Field(default=1, ge=1, le=99)
+    notes: str | None = None
+
+
+class QuoteCreateIn(BaseModel):
+    customer_name: str = Field(min_length=1, max_length=120)
+    customer_phone: str | None = None
+    installation_address: str | None = None
+    quote_date: date
+    remarks: str | None = None
+    items: list[QuoteItemCreateIn] = Field(min_length=1)
+
+
+class QuoteItemOut(BaseModel):
+    id: str
+    sort_order: int
+    category: str
+    form: str
+    location_name: str | None
+    custom_model: str | None
+    pricing_unit: str | None
+    material_unit_price: float | None
+    product_id: int
+    product_code: str
+    product_name: str
+    width_cm: float
+    height_cm: float
+    quantity: int
+    unit_price: float
+    subtotal: float
+    formula_summary: str | None
+    notes: str | None
+
+
+class QuoteOut(BaseModel):
+    id: str
+    quote_number: str
+    customer_name: str
+    customer_phone: str | None
+    installation_address: str | None
+    quote_date: date
+    remarks: str | None
+    total_amount: float
+    created_at: datetime
+    items: list[QuoteItemOut]
+
+
+class QuoteListOut(BaseModel):
+    items: list[QuoteOut]
+
+
 class StockSymbolIn(BaseModel):
     symbol: str
     market: str = "TWSE"

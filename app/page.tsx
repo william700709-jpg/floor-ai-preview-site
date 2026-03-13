@@ -20,7 +20,7 @@ export default function HomePage() {
               從地板到窗簾，提供溫暖、自然、安心的空間規劃與報價服務
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href="/floor-quote">立即估價</ButtonLink>
+              <ButtonLink href="/curtain-quote">線上報價</ButtonLink>
               <ButtonLink href="/projects" variant="secondary">
                 查看案例
               </ButtonLink>
@@ -86,11 +86,8 @@ export default function HomePage() {
           <div>
             <ContactForm source="quick-quote" title="快速估價表單" compact />
             <div className="mt-4 flex flex-wrap gap-3">
-              <ButtonLink href="/floor-quote" variant="secondary">
-                直接試算地板
-              </ButtonLink>
-              <ButtonLink href="/curtain-quote" variant="ghost">
-                試算窗簾
+              <ButtonLink href="/curtain-quote" variant="secondary">
+                前往線上報價
               </ButtonLink>
             </div>
           </div>

@@ -123,8 +123,7 @@ export function ContactForm({ source, title, compact = false }: ContactFormProps
             onChange={(event) => updateField("requestType", event.target.value)}
             className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 outline-none focus:border-sage"
           >
-            <option>地板估價</option>
-            <option>窗簾估價</option>
+            <option>線上報價</option>
             <option>整體規劃</option>
             <option>到府丈量</option>
           </select>
