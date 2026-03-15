@@ -113,6 +113,7 @@ class QuoteFormulaSetting(Base):
     rail_price_per_chi: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     labor_price: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
     fabric_width_chi: Mapped[float | None] = mapped_column(Numeric(8, 2), nullable=True)
+    fabric_multiplier: Mapped[float | None] = mapped_column(Numeric(8, 2), nullable=True)
     minimum_billable_talents: Mapped[int | None] = mapped_column(Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

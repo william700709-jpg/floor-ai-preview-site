@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-type QuoteCategory = "curtain" | "floor";
+type QuoteCategory = "curtain" | "floor" | "other";
 
 type QuoteProduct = {
   id: number;
@@ -23,21 +23,14 @@ type DraftItem = {
   category: QuoteCategory;
   productId: number | null;
   locationName: string;
+  customProductName: string;
   customModel: string;
+  customUnit: string;
   materialUnitPrice: string;
   widthCm: string;
   heightCm: string;
   quantity: string;
   notes: string;
-};
-
-type SavedQuoteItem = {
-  id: string;
-  location_name: string | null;
-  custom_model?: string | null;
-  product_name: string;
-  pricing_unit?: string | null;
-  material_unit_price?: number | null;
 };
 
 type SavedQuote = {
@@ -46,7 +39,6 @@ type SavedQuote = {
   customer_name: string;
   quote_date: string;
   total_amount: number;
-  items: SavedQuoteItem[];
 };
 
 type QuoteBuilderProps = {
@@ -62,7 +54,14 @@ type QuoteFormulaSetting = {
   rail_price_per_chi: number | null;
   labor_price: number | null;
   fabric_width_chi: number | null;
+  fabric_multiplier: number | null;
   minimum_billable_talents: number | null;
+};
+
+type ItemPreview = {
+  unitPrice: number;
+  subtotal: number;
+  summary: string;
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_PREVIEW_API_BASE_URL ?? "http://127.0.0.1:8000/api/v1";
@@ -74,7 +73,9 @@ function createDraftItem(category: QuoteCategory): DraftItem {
     category,
     productId: null,
     locationName: "",
+    customProductName: "",
     customModel: "",
+    customUnit: "",
     materialUnitPrice: "",
     widthCm: "",
     heightCm: "",
@@ -96,15 +97,30 @@ function formLabel(form: string) {
     daynight: "調光簾",
     spc: "SPC 地板",
     laminate: "超耐磨地板",
-    engineered: "海島型地板",
+    engineered: "海島型木地板",
+    other: "其他",
   };
 
   return formMap[form] ?? form;
 }
 
-function priceLabel(product: QuoteProduct | null) {
+function categoryLabel(category: QuoteCategory) {
+  const labels: Record<QuoteCategory, string> = {
+    curtain: "窗簾",
+    floor: "地板",
+    other: "其他",
+  };
+
+  return labels[category];
+}
+
+function priceLabel(product: QuoteProduct | null, category: QuoteCategory) {
+  if (category === "other") {
+    return "價格";
+  }
+
   if (!product) {
-    return "單價";
+    return "價格";
   }
 
   if (product.category === "floor") {
@@ -118,25 +134,52 @@ function priceLabel(product: QuoteProduct | null) {
   return "1碼價格";
 }
 
+function unitLabel(product: QuoteProduct | null, item: DraftItem) {
+  if (item.category === "other") {
+    return item.customUnit.trim() || "--";
+  }
+
+  return product?.unit_label ?? "--";
+}
+
 function defaultProductId(products: QuoteProduct[], category: QuoteCategory) {
-  return products.find((product) => product.category === category)?.id ?? products[0]?.id ?? null;
+  return products.find((product) => product.category === category)?.id ?? null;
 }
 
 function computeItemPreview(
   item: DraftItem,
   product: QuoteProduct | null,
   formulaSetting: QuoteFormulaSetting | null
-) {
+): ItemPreview {
   const quantity = Math.max(1, Number(item.quantity) || 1);
   const materialUnitPrice = Number(
     item.materialUnitPrice || formulaSetting?.material_unit_price_default || product?.price_per_square_meter || 0
   );
 
+  if (item.category === "other") {
+    const unit = item.customUnit.trim();
+    const styleName = item.customProductName.trim() || "其他項目";
+
+    if (materialUnitPrice <= 0) {
+      return {
+        unitPrice: 0,
+        subtotal: 0,
+        summary: "請輸入其他項目的價格後，即可看到試算結果。",
+      };
+    }
+
+    return {
+      unitPrice: materialUnitPrice,
+      subtotal: materialUnitPrice * quantity,
+      summary: `${styleName}：${quantity} ${unit || "單位"}，可用於安裝、配件或其他自訂項目。`,
+    };
+  }
+
   if (!product || materialUnitPrice <= 0) {
     return {
       unitPrice: 0,
       subtotal: 0,
-      summary: "請先輸入價格與數量。",
+      summary: "請先完成款式與價格設定。",
     };
   }
 
@@ -144,7 +187,7 @@ function computeItemPreview(
     return {
       unitPrice: materialUnitPrice,
       subtotal: materialUnitPrice * quantity,
-      summary: `地板每坪 ${formatCurrency(materialUnitPrice)}，數量 ${quantity} 坪`,
+      summary: `地板：每坪 ${formatCurrency(materialUnitPrice)}，數量 ${quantity} 坪。`,
     };
   }
 
@@ -155,7 +198,7 @@ function computeItemPreview(
     return {
       unitPrice: 0,
       subtotal: 0,
-      summary: "請先輸入尺寸與價格。",
+      summary: "請輸入寬與高後，即可依公式自動試算。",
     };
   }
 
@@ -165,33 +208,37 @@ function computeItemPreview(
 
   if (product.form === "fabric") {
     const fabricWidthChi = formulaSetting?.fabric_width_chi || 5;
+    const fabricMultiplier = formulaSetting?.fabric_multiplier || 2;
     const railPricePerChi = formulaSetting?.rail_price_per_chi || product.rail_price_per_meter;
     const laborPrice = formulaSetting?.labor_price || product.labor_price;
-    const panels = Math.ceil((widthChi * 2) / fabricWidthChi);
+    const panels = Math.ceil((widthChi * fabricMultiplier) / fabricWidthChi);
     const yards = ((heightChi + 1) * panels) / 3;
     const materialCost = (yards / 2) * materialUnitPrice;
     const laborCost = panels * laborPrice;
     const railCost = roundedWidthChi * railPricePerChi;
     const unitPrice = materialCost + laborCost + railCost;
+
     return {
       unitPrice,
       subtotal: unitPrice * quantity,
-      summary: `布簾約 ${yards.toFixed(2)} 碼，${panels} 幅，軌道 ${roundedWidthChi} 尺`,
+      summary: `布簾：${yards.toFixed(2)} 碼，${panels} 幅，軌道 ${roundedWidthChi} 尺。`,
     };
   }
 
   if (product.form === "sheer") {
+    const fabricMultiplier = formulaSetting?.fabric_multiplier || 2;
     const railPricePerChi = formulaSetting?.rail_price_per_chi || product.rail_price_per_meter;
     const laborPrice = formulaSetting?.labor_price || product.labor_price;
-    const yards = Math.ceil((widthChi * 2) / 3);
+    const yards = Math.ceil((widthChi * fabricMultiplier) / 3);
     const materialCost = (yards / 2) * materialUnitPrice;
     const laborCost = yards * laborPrice;
     const railCost = roundedWidthChi * railPricePerChi;
     const unitPrice = materialCost + laborCost + railCost;
+
     return {
       unitPrice,
       subtotal: unitPrice * quantity,
-      summary: `紗簾約 ${yards.toFixed(2)} 碼，軌道 ${roundedWidthChi} 尺`,
+      summary: `紗簾：${yards.toFixed(2)} 碼，軌道 ${roundedWidthChi} 尺。`,
     };
   }
 
@@ -204,10 +251,11 @@ function computeItemPreview(
     const laborCost = talents * laborPrice;
     const railCost = roundedWidthChi * railPricePerChi;
     const unitPrice = materialCost + laborCost + railCost;
+
     return {
       unitPrice,
       subtotal: unitPrice * quantity,
-      summary: `羅馬簾約 ${yards} 碼，${talents.toFixed(2)} 才`,
+      summary: `羅馬簾：${yards.toFixed(2)} 碼，${talents.toFixed(2)} 才。`,
     };
   }
 
@@ -215,11 +263,26 @@ function computeItemPreview(
   const discountRate = formulaSetting?.discount_rate ?? 0.4;
   const talents = Math.max(minimumTalents, Math.ceil(widthChi * heightChi));
   const unitPrice = talents * materialUnitPrice * discountRate;
+
   return {
     unitPrice,
     subtotal: unitPrice * quantity,
-    summary: `${formLabel(product.form)}約 ${talents} 才，已套用 ${discountRate} 折數`,
+    summary: `${formLabel(product.form)}：${talents} 才，折數 ${discountRate}。`,
   };
+}
+
+function getInitialUnitPrice(
+  item: DraftItem,
+  products: QuoteProduct[],
+  formulaSettings: QuoteFormulaSetting[]
+) {
+  const product = products.find((entry) => entry.id === item.productId) ?? null;
+  const formula = formulaSettings.find((entry) => entry.form === product?.form) ?? null;
+  return formula
+    ? String(formula.material_unit_price_default)
+    : product
+      ? String(product.price_per_square_meter)
+      : "";
 }
 
 export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
@@ -250,7 +313,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
         ]);
 
         if (!productsResponse.ok || !formulasResponse.ok) {
-          throw new Error("無法讀取報價資料");
+          throw new Error("無法載入報價設定資料。");
         }
 
         const productsData: QuoteProduct[] = await productsResponse.json();
@@ -265,24 +328,18 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
         setItems((current) =>
           current.map((item) => {
             const productId = item.productId ?? defaultProductId(productsData, item.category);
-            const product = productsData.find((entry) => entry.id === productId) ?? null;
-            const formula = formulasData.items.find((entry) => entry.form === product?.form) ?? null;
-            return {
-              ...item,
-              productId,
-              materialUnitPrice:
-                item.materialUnitPrice ||
-                (formula
-                  ? String(formula.material_unit_price_default)
-                  : product
-                    ? String(product.price_per_square_meter)
-                    : ""),
-            };
+            const nextItem = { ...item, productId };
+
+            if (!item.materialUnitPrice) {
+              nextItem.materialUnitPrice = getInitialUnitPrice(nextItem, productsData, formulasData.items);
+            }
+
+            return nextItem;
           })
         );
       } catch (error) {
         if (active) {
-          setErrorMessage(error instanceof Error ? error.message : "載入失敗");
+          setErrorMessage(error instanceof Error ? error.message : "載入資料時發生問題。");
         }
       } finally {
         if (active) {
@@ -306,27 +363,27 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
         }
 
         const nextItem = { ...item, ...patch };
-        const effectiveProductId =
-          patch.category && patch.category !== item.category
-            ? defaultProductId(products, patch.category)
-            : patch.productId ?? nextItem.productId;
+        const categoryChanged = Boolean(patch.category && patch.category !== item.category);
 
-        if (patch.category && patch.category !== item.category) {
-          nextItem.productId = effectiveProductId;
-          if (patch.category === "floor") {
+        if (categoryChanged) {
+          nextItem.productId = defaultProductId(products, patch.category as QuoteCategory);
+          nextItem.materialUnitPrice = "";
+
+          if (patch.category !== "curtain") {
             nextItem.widthCm = "";
             nextItem.heightCm = "";
           }
+
+          if (patch.category !== "other") {
+            nextItem.customProductName = "";
+            nextItem.customUnit = "";
+          }
+
+          nextItem.materialUnitPrice = getInitialUnitPrice(nextItem, products, formulaSettings);
         }
 
-        if (patch.productId || (patch.category && patch.category !== item.category)) {
-          const product = products.find((entry) => entry.id === effectiveProductId) ?? null;
-          const formula = formulaSettings.find((entry) => entry.form === product?.form) ?? null;
-          nextItem.materialUnitPrice = formula
-            ? String(formula.material_unit_price_default)
-            : product
-              ? String(product.price_per_square_meter)
-              : "";
+        if (patch.productId && patch.productId !== item.productId) {
+          nextItem.materialUnitPrice = getInitialUnitPrice(nextItem, products, formulaSettings);
         }
 
         return nextItem;
@@ -336,15 +393,8 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
 
   const addItem = (category: QuoteCategory) => {
     const nextItem = createDraftItem(category);
-    const productId = defaultProductId(products, category);
-    const product = products.find((entry) => entry.id === productId) ?? null;
-    const formula = formulaSettings.find((entry) => entry.form === product?.form) ?? null;
-    nextItem.productId = productId;
-    nextItem.materialUnitPrice = formula
-      ? String(formula.material_unit_price_default)
-      : product
-        ? String(product.price_per_square_meter)
-        : "";
+    nextItem.productId = defaultProductId(products, category);
+    nextItem.materialUnitPrice = getInitialUnitPrice(nextItem, products, formulaSettings);
     setItems((current) => [...current, nextItem]);
   };
 
@@ -354,15 +404,8 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
 
   const resetForm = () => {
     const nextItem = createDraftItem(defaultCategory);
-    const productId = defaultProductId(products, defaultCategory);
-    const product = products.find((entry) => entry.id === productId) ?? null;
-    const formula = formulaSettings.find((entry) => entry.form === product?.form) ?? null;
-    nextItem.productId = productId;
-    nextItem.materialUnitPrice = formula
-      ? String(formula.material_unit_price_default)
-      : product
-        ? String(product.price_per_square_meter)
-        : "";
+    nextItem.productId = defaultProductId(products, defaultCategory);
+    nextItem.materialUnitPrice = getInitialUnitPrice(nextItem, products, formulaSettings);
     setCustomerName("");
     setCustomerPhone("");
     setInstallationAddress("");
@@ -386,23 +429,28 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
     setSuccessMessage("");
 
     if (!customerName.trim()) {
-      setErrorMessage("請先輸入客戶姓名。");
+      setErrorMessage("請輸入客戶姓名。");
       return;
     }
 
     const invalidItem = items.find((item) => {
-      const requiresSize = item.category === "curtain";
-      return (
-        !item.productId ||
-        (requiresSize && Number(item.widthCm) <= 0) ||
-        (requiresSize && Number(item.heightCm) <= 0) ||
-        Number(item.quantity) <= 0 ||
-        Number(item.materialUnitPrice) <= 0
-      );
+      if (!item.productId || Number(item.quantity) <= 0 || Number(item.materialUnitPrice) <= 0) {
+        return true;
+      }
+
+      if (item.category === "curtain") {
+        return Number(item.widthCm) <= 0 || Number(item.heightCm) <= 0;
+      }
+
+      if (item.category === "other") {
+        return !item.customProductName.trim() || !item.customUnit.trim();
+      }
+
+      return false;
     });
 
     if (invalidItem) {
-      setErrorMessage("每一筆明細都要有款式、價格與數量；窗簾項目另外需要尺寸。");
+      setErrorMessage("請確認每一筆明細都已填好必要欄位，再送出報價單。");
       return;
     }
 
@@ -423,10 +471,12 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
           items: items.map((item) => ({
             product_id: item.productId,
             location_name: item.locationName.trim() || null,
+            custom_product_name: item.category === "other" ? item.customProductName.trim() || null : null,
             custom_model: item.customModel.trim() || null,
+            custom_unit: item.category === "other" ? item.customUnit.trim() || null : null,
             material_unit_price: Number(item.materialUnitPrice),
-            width_cm: item.category === "floor" ? 0 : Number(item.widthCm),
-            height_cm: item.category === "floor" ? 0 : Number(item.heightCm),
+            width_cm: item.category === "curtain" ? Number(item.widthCm) : 0,
+            height_cm: item.category === "curtain" ? Number(item.heightCm) : 0,
             quantity: Number(item.quantity),
             notes: item.notes.trim() || null,
           })),
@@ -435,15 +485,15 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
 
       if (!response.ok) {
         const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(payload?.detail ?? "儲存報價單失敗");
+        throw new Error(payload?.detail ?? "送出報價單失敗。");
       }
 
       const quote: SavedQuote = await response.json();
       setSavedQuote(quote);
-      setSuccessMessage(`已建立報價單 ${quote.quote_number}`);
+      setSuccessMessage(`報價單已建立：${quote.quote_number}`);
       resetForm();
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "儲存報價單失敗");
+      setErrorMessage(error instanceof Error ? error.message : "送出報價單失敗。");
     } finally {
       setSaving(false);
     }
@@ -456,11 +506,19 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
 
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/quotes/${savedQuote.id}`);
-      setSuccessMessage(`已複製報價單連結 ${savedQuote.quote_number}`);
+      setSuccessMessage(`報價單連結已複製：${savedQuote.quote_number}`);
     } catch {
-      setErrorMessage("無法複製連結，請直接使用開啟報價單。");
+      setErrorMessage("無法複製連結，請直接開啟報價單後再複製網址。");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="card-surface p-8 text-sm leading-7 text-stone/75">
+        正在載入報價設定，請稍候。
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.35fr,0.65fr]">
@@ -473,6 +531,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                 value={customerName}
                 onChange={(event) => setCustomerName(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                placeholder="請輸入客戶姓名"
               />
             </label>
             <label className="text-sm text-stone/75">
@@ -481,6 +540,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                 value={customerPhone}
                 onChange={(event) => setCustomerPhone(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                placeholder="請輸入聯絡電話"
               />
             </label>
             <label className="text-sm text-stone/75 sm:col-span-2">
@@ -489,6 +549,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                 value={installationAddress}
                 onChange={(event) => setInstallationAddress(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                placeholder="請輸入安裝地址"
               />
             </label>
             <label className="text-sm text-stone/75">
@@ -501,21 +562,23 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
               />
             </label>
             <label className="text-sm text-stone/75">
-              備註
+              整體備註
               <input
                 value={remarks}
                 onChange={(event) => setRemarks(event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                placeholder="例如：含丈量、特殊施工說明"
               />
             </label>
           </div>
         </div>
-
         {items.map((item, index) => {
           const productOptions = products.filter((product) => product.category === item.category);
           const product = productOptions.find((entry) => entry.id === item.productId) ?? null;
           const preview = previews[index];
           const isFloorItem = item.category === "floor";
+          const isOtherItem = item.category === "other";
+          const displayStyle = isOtherItem ? item.customProductName.trim() || "尚未填寫" : product ? formLabel(product.form) : "--";
 
           return (
             <div key={item.id} className="card-surface p-6 sm:p-8">
@@ -530,7 +593,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     onClick={() => removeItem(item.id)}
                     className="rounded-full border border-stone/10 px-4 py-2 text-sm text-stone/70 hover:border-stone/20 hover:text-stone"
                   >
-                    刪除此筆
+                    刪除此項
                   </button>
                 ) : null}
               </div>
@@ -545,6 +608,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                   >
                     <option value="curtain">窗簾</option>
                     <option value="floor">地板</option>
+                    <option value="other">其他</option>
                   </select>
                 </label>
                 <label className="text-sm text-stone/75">
@@ -556,20 +620,34 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     placeholder="例如：客廳、主臥、小孩房"
                   />
                 </label>
-                <label className="text-sm text-stone/75">
-                  款式
-                  <select
-                    value={item.productId ?? ""}
-                    onChange={(event) => updateItem(item.id, { productId: Number(event.target.value) })}
-                    className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
-                  >
-                    {productOptions.map((entry) => (
-                      <option key={entry.id} value={entry.id}>
-                        {formLabel(entry.form)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+
+                {isOtherItem ? (
+                  <label className="text-sm text-stone/75">
+                    款式
+                    <input
+                      value={item.customProductName}
+                      onChange={(event) => updateItem(item.id, { customProductName: event.target.value })}
+                      className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                      placeholder="請自行輸入款式名稱"
+                    />
+                  </label>
+                ) : (
+                  <label className="text-sm text-stone/75">
+                    款式
+                    <select
+                      value={item.productId ?? ""}
+                      onChange={(event) => updateItem(item.id, { productId: Number(event.target.value) })}
+                      className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                    >
+                      {productOptions.map((entry) => (
+                        <option key={entry.id} value={entry.id}>
+                          {formLabel(entry.form)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+
                 <label className="text-sm text-stone/75">
                   型號
                   <input
@@ -579,8 +657,9 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     placeholder="例如：LG3243-37"
                   />
                 </label>
+
                 <label className="text-sm text-stone/75">
-                  {priceLabel(product)}
+                  {priceLabel(product, item.category)}
                   <input
                     type="number"
                     min="1"
@@ -588,11 +667,13 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     value={item.materialUnitPrice}
                     onChange={(event) => updateItem(item.id, { materialUnitPrice: event.target.value })}
                     className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                    placeholder={isOtherItem ? "請輸入此項目價格" : undefined}
                   />
                 </label>
-                {!isFloorItem ? (
+
+                {!isFloorItem && !isOtherItem ? (
                   <label className="text-sm text-stone/75">
-                    寬(cm)
+                    寬/CM
                     <input
                       type="number"
                       min="1"
@@ -603,9 +684,10 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     />
                   </label>
                 ) : null}
-                {!isFloorItem ? (
+
+                {!isFloorItem && !isOtherItem ? (
                   <label className="text-sm text-stone/75">
-                    高(cm)
+                    高/CM
                     <input
                       type="number"
                       min="1"
@@ -616,8 +698,9 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     />
                   </label>
                 ) : null}
+
                 <label className="text-sm text-stone/75">
-                  {isFloorItem ? "數量(坪)" : "數量"}
+                  {isFloorItem ? "坪數" : "數量"}
                   <input
                     type="number"
                     min="1"
@@ -627,27 +710,43 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
                   />
                 </label>
-                <label className="text-sm text-stone/75">
-                  單位
-                  <div className="mt-2 rounded-2xl border border-stone/10 bg-[#f7f1e8] px-4 py-3 text-stone">
-                    {product?.unit_label ?? "--"}
-                  </div>
-                </label>
+
+                {isOtherItem ? (
+                  <label className="text-sm text-stone/75">
+                    單位
+                    <input
+                      value={item.customUnit}
+                      onChange={(event) => updateItem(item.id, { customUnit: event.target.value })}
+                      className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                      placeholder="例如：式、支、組、批"
+                    />
+                  </label>
+                ) : (
+                  <label className="text-sm text-stone/75">
+                    單位
+                    <div className="mt-2 rounded-2xl border border-stone/10 bg-[#f7f1e8] px-4 py-3 text-stone">
+                      {unitLabel(product, item)}
+                    </div>
+                  </label>
+                )}
+
                 <label className="text-sm text-stone/75 sm:col-span-2">
                   備註
                   <input
                     value={item.notes}
                     onChange={(event) => updateItem(item.id, { notes: event.target.value })}
                     className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                    placeholder="可補充施工方式、配件內容或特殊需求"
                   />
                 </label>
               </div>
 
               <div className="mt-6 grid gap-4 rounded-[28px] bg-[#eef2eb] p-5 sm:grid-cols-3">
                 <div className="rounded-3xl bg-white p-4">
-                  <p className="text-sm text-stone/65">報價基準</p>
+                  <p className="text-sm text-stone/65">明細項目</p>
                   <p className="mt-2 text-lg font-semibold text-stone">
-                    {product ? `${formLabel(product.form)}${item.customModel ? ` / ${item.customModel}` : ""}` : "--"}
+                    {categoryLabel(item.category)} / {displayStyle}
+                    {item.customModel ? ` / ${item.customModel}` : ""}
                   </p>
                 </div>
                 <div className="rounded-3xl bg-white p-4">
@@ -665,7 +764,6 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
             </div>
           );
         })}
-
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -683,11 +781,18 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
           </button>
           <button
             type="button"
+            onClick={() => addItem("other")}
+            className="rounded-full bg-[#eef2eb] px-5 py-3 text-sm font-medium text-stone hover:bg-[#e4ebdf]"
+          >
+            新增其他項目
+          </button>
+          <button
+            type="button"
             onClick={submitQuote}
             disabled={saving || loading}
             className="rounded-full border border-stone/10 bg-white px-5 py-3 text-sm font-medium text-stone hover:border-stone/20 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {saving ? "儲存中..." : "送出報價單"}
+            {saving ? "送出中..." : "送出報價單"}
           </button>
         </div>
 
@@ -708,7 +813,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
             <p className="text-sm uppercase tracking-[0.24em] text-clay">Quote Output</p>
             <p className="mt-2 text-base font-semibold text-stone">{savedQuote.quote_number}</p>
             <p className="mt-2 text-sm leading-7 text-stone/70">
-              報價已經整理完成，現在可以直接開啟正式報價單，列印或另存 PDF，方便和家人一起比較、確認。
+              報價單已建立完成，現在可以直接開啟正式報價頁，列印或另存 PDF 傳給客戶確認。
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
               <a
@@ -756,21 +861,22 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
               <p className="mt-2 text-2xl font-semibold">{formatCurrency(depositAmount)}</p>
             </div>
             <div className="rounded-3xl bg-[#d8c2a8] p-5 text-stone">
-              <p className="text-sm text-stone/70">最新報價單號</p>
+              <p className="text-sm text-stone/70">目前報價單號</p>
               <p className="mt-2 text-xl font-semibold">{savedQuote?.quote_number ?? "尚未送出"}</p>
             </div>
           </div>
           <p className="mt-5 text-sm leading-7 text-white/70">
-            先填入尺寸或坪數，就能快速看到預算方向。若內容符合需求，再進一步安排丈量與細節確認會更有效率。
+            每一筆明細都會即時更新小計與總額，方便你和客戶快速比較不同方案，也能把自訂項目一併放進同一張報價單。
           </p>
         </div>
+
         <div className="card-surface p-6 sm:p-8">
           <p className="text-sm uppercase tracking-[0.24em] text-clay">Tips</p>
-          <h3 className="mt-2 text-2xl font-semibold text-stone">怎麼使用更快看懂預算</h3>
+          <h3 className="mt-2 text-2xl font-semibold text-stone">使用小提醒</h3>
           <div className="mt-4 space-y-3 text-sm leading-7 text-stone/75">
-            <p>先選擇想比較的窗簾或地板款式，再填入尺寸或坪數，就能立即看到價格變化。</p>
-            <p>如果想比較不同空間，也可以把客廳、主臥、次臥分開建立，整張報價會更清楚。</p>
-            <p>確認後可直接開啟正式報價單，列印或另存 PDF，方便和家人、設計師一起討論。</p>
+            <p>窗簾會依照款式與尺寸自動套用公式，地板則以每坪價格乘上坪數計算。</p>
+            <p>如果這筆是安裝、配件、拆除或其他客製內容，請直接選擇「其他」，再自行輸入款式、單位與價格。</p>
+            <p>送出後可立即開啟正式報價單，列印或另存 PDF 給客戶確認。</p>
           </div>
         </div>
       </div>

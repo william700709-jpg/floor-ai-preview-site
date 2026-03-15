@@ -137,6 +137,7 @@ class QuoteFormulaSettingOut(BaseModel):
     rail_price_per_chi: float | None
     labor_price: float | None
     fabric_width_chi: float | None
+    fabric_multiplier: float | None
     minimum_billable_talents: int | None
 
 
@@ -147,6 +148,7 @@ class QuoteFormulaSettingUpdateIn(BaseModel):
     rail_price_per_chi: float | None = Field(default=None, ge=0)
     labor_price: float | None = Field(default=None, ge=0)
     fabric_width_chi: float | None = Field(default=None, gt=0)
+    fabric_multiplier: float | None = Field(default=None, gt=0)
     minimum_billable_talents: int | None = Field(default=None, ge=0)
 
 
@@ -161,7 +163,9 @@ class QuoteFormulaSettingSaveIn(BaseModel):
 class QuoteItemCreateIn(BaseModel):
     product_id: int
     location_name: str | None = None
+    custom_product_name: str | None = None
     custom_model: str | None = None
+    custom_unit: str | None = None
     material_unit_price: float | None = Field(default=None, gt=0)
     width_cm: float = Field(default=0, ge=0)
     height_cm: float = Field(default=0, ge=0)

@@ -153,6 +153,18 @@ def seed_quote_products(db: Session) -> None:
             "labor_price": 780,
             "minimum_charge": 5200,
         },
+        {
+            "category": "other",
+            "form": "other",
+            "code": "CUSTOM-OTHER",
+            "name": "其他",
+            "unit_label": "自訂",
+            "price_per_square_meter": 0,
+            "fullness_factor": 1.0,
+            "rail_price_per_meter": 0,
+            "labor_price": 0,
+            "minimum_charge": 0,
+        },
     ]
 
     existing_rows = {
@@ -188,6 +200,7 @@ def seed_quote_formula_settings(db: Session) -> None:
             "rail_price_per_chi": 40,
             "labor_price": 160,
             "fabric_width_chi": 5,
+            "fabric_multiplier": 2,
             "minimum_billable_talents": None,
         },
         {
@@ -198,6 +211,7 @@ def seed_quote_formula_settings(db: Session) -> None:
             "rail_price_per_chi": 50,
             "labor_price": 170,
             "fabric_width_chi": None,
+            "fabric_multiplier": 2,
             "minimum_billable_talents": None,
         },
         {
@@ -208,6 +222,7 @@ def seed_quote_formula_settings(db: Session) -> None:
             "rail_price_per_chi": 100,
             "labor_price": 40,
             "fabric_width_chi": None,
+            "fabric_multiplier": None,
             "minimum_billable_talents": None,
         },
         {
@@ -218,6 +233,7 @@ def seed_quote_formula_settings(db: Session) -> None:
             "rail_price_per_chi": None,
             "labor_price": None,
             "fabric_width_chi": None,
+            "fabric_multiplier": None,
             "minimum_billable_talents": 15,
         },
         {
@@ -228,6 +244,7 @@ def seed_quote_formula_settings(db: Session) -> None:
             "rail_price_per_chi": None,
             "labor_price": None,
             "fabric_width_chi": None,
+            "fabric_multiplier": None,
             "minimum_billable_talents": 15,
         },
     ]

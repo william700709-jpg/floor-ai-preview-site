@@ -12,6 +12,7 @@ type QuoteItem = {
   custom_model: string | null;
   pricing_unit: string | null;
   material_unit_price: number | null;
+  product_name: string;
   width_cm: number;
   height_cm: number;
   quantity: number;
@@ -46,10 +47,19 @@ function formLabel(form: string) {
     daynight: "調光簾",
     spc: "SPC 地板",
     laminate: "超耐磨地板",
-    engineered: "海島型地板",
+    engineered: "海島型木地板",
+    other: "其他",
   };
 
   return formMap[form] ?? form;
+}
+
+function displayItemName(item: QuoteItem) {
+  if (item.form === "other") {
+    return item.product_name;
+  }
+
+  return formLabel(item.form);
 }
 
 function formatDimension(value: number) {
@@ -95,9 +105,9 @@ export default async function QuoteDocumentPage({
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div>
                 <p className="text-sm uppercase tracking-[0.24em] text-clay">Quote Document</p>
-                <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone">晨宴傢飾報價單</h1>
+                <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone">正式報價單</h1>
                 <p className="quote-print-optional mt-3 text-sm leading-7 text-stone/70">
-                  這是給客戶看的正式報價內容，列印或另存 PDF 時只會保留報價單本身。
+                  可直接列印或另存 PDF，提供客戶、家人或設計師進一步確認內容。
                 </p>
               </div>
               <QuoteActions quoteId={quote.id} />
@@ -128,12 +138,11 @@ export default async function QuoteDocumentPage({
                 <p className="mt-2 text-base leading-7 text-stone">{quote.installation_address || "-"}</p>
               </div>
               <div>
-                <p className="text-sm text-stone/60">整單備註</p>
+                <p className="text-sm text-stone/60">整體備註</p>
                 <p className="mt-2 text-base leading-7 text-stone">{quote.remarks || "-"}</p>
               </div>
             </div>
           </div>
-
           <div className="card-surface quote-card overflow-hidden p-0">
             <div className="overflow-x-auto">
               <table className="quote-line-items min-w-full border-collapse text-left">
@@ -156,7 +165,7 @@ export default async function QuoteDocumentPage({
                     <tr key={item.id} className={index % 2 === 0 ? "bg-white" : "bg-[#fcfaf5]"}>
                       <td className="px-4 py-4 text-base text-stone">{index + 1}</td>
                       <td className="px-4 py-4 text-base text-stone">{item.location_name || "-"}</td>
-                      <td className="px-4 py-4 text-base text-stone">{formLabel(item.form)}</td>
+                      <td className="px-4 py-4 text-base text-stone">{displayItemName(item)}</td>
                       <td className="px-4 py-4 text-base text-stone">{item.custom_model || "-"}</td>
                       <td className="px-4 py-4 text-base text-stone">
                         {item.material_unit_price && item.pricing_unit
@@ -184,7 +193,7 @@ export default async function QuoteDocumentPage({
                 {quote.items.map((item, index) => (
                   <div key={item.id}>
                     <p>
-                      {index + 1}. {item.location_name || "未填位置"} / {formLabel(item.form)}
+                      {index + 1}. {item.location_name || "未填位置"} / {displayItemName(item)}
                       {item.custom_model ? ` / ${item.custom_model}` : ""}
                     </p>
                     <p>{item.formula_summary || "-"}</p>
@@ -215,7 +224,7 @@ export default async function QuoteDocumentPage({
                 </div>
               </div>
               <p className="quote-print-optional mt-4 text-sm leading-7 text-stone/70">
-                若需修改款式、型號、尺寸或單價，請回報價頁重開新單，再重新列印。
+                報價內容若需調整款式、尺寸或自訂項目，可再回到線上報價頁重新編輯建立新版報價單。
               </p>
             </div>
           </div>

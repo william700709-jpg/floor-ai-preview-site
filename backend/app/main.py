@@ -27,6 +27,7 @@ async def lifespan(app: FastAPI):
         connection.execute(text("ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS custom_model VARCHAR(120)"))
         connection.execute(text("ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS pricing_unit VARCHAR(20)"))
         connection.execute(text("ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS material_unit_price NUMERIC(12, 2)"))
+        connection.execute(text("ALTER TABLE quote_formula_settings ADD COLUMN IF NOT EXISTS fabric_multiplier NUMERIC(8, 2)"))
     with SessionLocal() as db:
         seed_floor_styles(db)
         seed_quote_products(db)

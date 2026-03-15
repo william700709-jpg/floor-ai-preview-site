@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS quote_formula_settings (
   rail_price_per_chi NUMERIC(12, 2),
   labor_price NUMERIC(12, 2),
   fabric_width_chi NUMERIC(8, 2),
+  fabric_multiplier NUMERIC(8, 2),
   minimum_billable_talents INTEGER,
   is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),

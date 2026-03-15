@@ -11,6 +11,7 @@ type QuoteFormulaSetting = {
   rail_price_per_chi: number | null;
   labor_price: number | null;
   fabric_width_chi: number | null;
+  fabric_multiplier: number | null;
   minimum_billable_talents: number | null;
 };
 
@@ -86,6 +87,7 @@ export function QuoteFormulaSettings() {
             rail_price_per_chi: item.rail_price_per_chi,
             labor_price: item.labor_price,
             fabric_width_chi: item.fabric_width_chi,
+            fabric_multiplier: item.fabric_multiplier,
             minimum_billable_talents: item.minimum_billable_talents,
           })),
         }),
@@ -180,6 +182,17 @@ export function QuoteFormulaSettings() {
                 step="0.1"
                 value={item.fabric_width_chi ?? ""}
                 onChange={(event) => updateItem(item.form, "fabric_width_chi", event.target.value)}
+                className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+              />
+            </label>
+
+            <label className="text-sm text-stone/75">
+              布量
+              <input
+                type="number"
+                step="0.1"
+                value={item.fabric_multiplier ?? ""}
+                onChange={(event) => updateItem(item.form, "fabric_multiplier", event.target.value)}
                 className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
               />
             </label>

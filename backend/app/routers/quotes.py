@@ -37,16 +37,6 @@ def _ceil_decimal(value: Decimal) -> int:
     return math.ceil(float(value))
 
 
-def _round_decimal(value: Decimal) -> int:
-    return round(float(value))
-
-
-def _material_unit_price(product: QuoteProduct, value: float | None) -> Decimal:
-    if value is not None:
-        return _money(value)
-    return _money(product.price_per_square_meter)
-
-
 def _setting_value(setting: QuoteFormulaSetting | None, field: str, fallback: float | int | None) -> Decimal | None:
     raw_value = getattr(setting, field) if setting is not None else fallback
     if raw_value is None:
@@ -68,31 +58,26 @@ def _calculate_curtain_item(
     rail_price_per_chi = _setting_value(setting, "rail_price_per_chi", product.rail_price_per_meter) or Decimal("0")
     labor_price = _setting_value(setting, "labor_price", product.labor_price) or Decimal("0")
     fabric_width_chi = _setting_value(setting, "fabric_width_chi", 5) or Decimal("5")
+    fabric_multiplier = _setting_value(setting, "fabric_multiplier", 2) or Decimal("2")
     discount_rate = _setting_value(setting, "discount_rate", None) or Decimal("0.4")
     minimum_billable_talents = int(getattr(setting, "minimum_billable_talents", None) or 0)
 
     if product.form == "fabric":
-        panels = Decimal(_ceil_decimal((width_chi * Decimal("2")) / fabric_width_chi))
+        panels = Decimal(_ceil_decimal((width_chi * fabric_multiplier) / fabric_width_chi))
         yards = ((height_chi + Decimal("1")) * panels) / Decimal("3")
         material_cost = (yards / Decimal("2")) * material_unit_price
         labor_cost = panels * labor_price
         rail_cost = rounded_width * rail_price_per_chi
         single_total = material_cost + labor_cost + rail_cost
-        summary = (
-            f"布簾：{yards.quantize(Decimal('0.01'))} 碼，"
-            f"{int(panels)} 幅，軌道 {int(rounded_width)} 尺"
-        )
+        summary = f"布簾：{yards.quantize(Decimal('0.01'))} 碼，{int(panels)} 幅，軌道 {int(rounded_width)} 尺"
         pricing_unit = "碼"
     elif product.form == "sheer":
-        yards = Decimal(_ceil_decimal((width_chi * Decimal("2")) / Decimal("3")))
+        yards = Decimal(_ceil_decimal((width_chi * fabric_multiplier) / Decimal("3")))
         material_cost = (yards / Decimal("2")) * material_unit_price
         labor_cost = yards * labor_price
         rail_cost = rounded_width * rail_price_per_chi
         single_total = material_cost + labor_cost + rail_cost
-        summary = (
-            f"紗簾：{yards.quantize(Decimal('0.01'))} 碼，"
-            f"軌道 {int(rounded_width)} 尺"
-        )
+        summary = f"紗簾：{yards.quantize(Decimal('0.01'))} 碼，軌道 {int(rounded_width)} 尺"
         pricing_unit = "碼"
     elif product.form == "roman":
         talents = width_chi * height_chi
@@ -101,24 +86,19 @@ def _calculate_curtain_item(
         labor_cost = talents * labor_price
         rail_cost = rounded_width * rail_price_per_chi
         single_total = material_cost + labor_cost + rail_cost
-        summary = (
-            f"羅馬簾：{yards.quantize(Decimal('0.01'))} 碼，"
-            f"{talents.quantize(Decimal('0.01'))} 才"
-        )
+        summary = f"羅馬簾：{yards.quantize(Decimal('0.01'))} 碼，{talents.quantize(Decimal('0.01'))} 才"
         pricing_unit = "碼"
     elif product.form in {"roller", "daynight"}:
         talents = Decimal(max(max(1, minimum_billable_talents), _ceil_decimal(width_chi * height_chi)))
         single_total = talents * material_unit_price * discount_rate
-        summary = (
-            f"{'調光簾' if product.form == 'daynight' else '捲簾'}：{int(talents)} 才，"
-            f"折數 {discount_rate.normalize()}"
-        )
+        display_name = "調光簾" if product.form == "daynight" else "捲簾"
+        summary = f"{display_name}：{int(talents)} 才，折數 {discount_rate.normalize()}"
         pricing_unit = "才"
     else:
         area = (Decimal(str(width_cm)) / Decimal("100")) * (Decimal(str(height_cm)) / Decimal("100"))
         single_total = area * material_unit_price
-        summary = f"窗簾：{area.quantize(Decimal('0.01'))} 平方公尺"
-        pricing_unit = "平方公尺"
+        summary = f"{product.name}：{area.quantize(Decimal('0.01'))} 平方公尺"
+        pricing_unit = product.unit_label
 
     single_total = _money(single_total)
     if product.minimum_charge and single_total < Decimal(str(product.minimum_charge)):
@@ -129,14 +109,25 @@ def _calculate_curtain_item(
 
 
 def _calculate_floor_item(
-    product: QuoteProduct,
     quantity: int,
     material_unit_price: Decimal,
 ) -> tuple[Decimal, Decimal, str, str]:
     single_total = _money(material_unit_price)
     subtotal = _money(single_total * quantity)
-    summary = f"地板：每坪 {material_unit_price.quantize(Decimal('0.01'))} 元，共 {quantity} 坪"
+    summary = f"地板：每坪 {material_unit_price.quantize(Decimal('0.01'))}，數量 {quantity} 坪"
     return single_total, subtotal, summary, "坪"
+
+
+def _calculate_other_item(
+    quantity: int,
+    material_unit_price: Decimal,
+    custom_product_name: str,
+    custom_unit: str,
+) -> tuple[Decimal, Decimal, str, str]:
+    single_total = _money(material_unit_price)
+    subtotal = _money(single_total * quantity)
+    summary = f"{custom_product_name}：{quantity} {custom_unit}"
+    return single_total, subtotal, summary, custom_unit
 
 
 def _serialize_quote(quote: Quote) -> QuoteOut:
@@ -186,6 +177,7 @@ def _serialize_formula_setting(setting: QuoteFormulaSetting) -> QuoteFormulaSett
         rail_price_per_chi=float(setting.rail_price_per_chi) if setting.rail_price_per_chi is not None else None,
         labor_price=float(setting.labor_price) if setting.labor_price is not None else None,
         fabric_width_chi=float(setting.fabric_width_chi) if setting.fabric_width_chi is not None else None,
+        fabric_multiplier=float(setting.fabric_multiplier) if setting.fabric_multiplier is not None else None,
         minimum_billable_talents=setting.minimum_billable_talents,
     )
 
@@ -254,6 +246,7 @@ def save_quote_formulas(payload: QuoteFormulaSettingSaveIn, db: Session = Depend
         row.rail_price_per_chi = item.rail_price_per_chi
         row.labor_price = item.labor_price
         row.fabric_width_chi = item.fabric_width_chi
+        row.fabric_multiplier = item.fabric_multiplier
         row.minimum_billable_talents = item.minimum_billable_talents
 
     db.commit()
@@ -355,12 +348,30 @@ def create_quote(payload: QuoteCreateIn, db: Session = Depends(get_db)) -> Quote
                 quantity=item.quantity,
                 material_unit_price=material_unit_price,
             )
-        else:
+            product_name = product.name
+        elif product.category == "floor":
             unit_price, subtotal, summary, pricing_unit = _calculate_floor_item(
-                product=product,
                 quantity=item.quantity,
                 material_unit_price=material_unit_price,
             )
+            product_name = product.name
+        elif product.category == "other":
+            custom_product_name = (item.custom_product_name or "").strip()
+            custom_unit = (item.custom_unit or "").strip()
+            if not custom_product_name:
+                raise HTTPException(status_code=422, detail="Other items require a custom product name")
+            if not custom_unit:
+                raise HTTPException(status_code=422, detail="Other items require a custom unit")
+
+            unit_price, subtotal, summary, pricing_unit = _calculate_other_item(
+                quantity=item.quantity,
+                material_unit_price=material_unit_price,
+                custom_product_name=custom_product_name,
+                custom_unit=custom_unit,
+            )
+            product_name = custom_product_name
+        else:
+            raise HTTPException(status_code=422, detail=f"Unsupported product category: {product.category}")
 
         total_amount += subtotal
         quote.items.append(
@@ -374,7 +385,7 @@ def create_quote(payload: QuoteCreateIn, db: Session = Depends(get_db)) -> Quote
                 pricing_unit=pricing_unit,
                 material_unit_price=material_unit_price,
                 product_code=product.code,
-                product_name=product.name,
+                product_name=product_name,
                 width_cm=item.width_cm,
                 height_cm=item.height_cm,
                 quantity=item.quantity,
