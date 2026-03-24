@@ -158,9 +158,9 @@ export default function HomePage() {
                 <Image
                   src={project.image}
                   alt={project.title}
-                  width={800}
-                  height={600}
-                  className="h-64 w-full object-cover"
+                  width={900}
+                  height={462}
+                  className="aspect-[845/433] w-full object-cover object-top"
                 />
                 <div className="p-6">
                   <p className="text-sm uppercase tracking-[0.22em] text-clay">{project.category}</p>
