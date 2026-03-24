@@ -47,21 +47,21 @@ export const featuredProjects = [
     category: "超耐磨木地板",
     description: "以淺木色地板搭配奶油白牆面，讓日常更明亮放鬆。",
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80"
   },
   {
     title: "柔光臥室窗景",
     category: "雙層窗簾",
     description: "紗簾引入自然光，遮光簾保留夜間隱私與安定感。",
     image:
-      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
   },
   {
     title: "靜謐書房配置",
     category: "SPC 石塑地板",
     description: "低飽和綠與暖灰交織，呈現沉穩不冰冷的閱讀氛圍。",
     image:
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&w=1200&q=80"
   }
 ];
 

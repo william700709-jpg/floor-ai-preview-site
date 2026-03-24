@@ -4,6 +4,38 @@ import { ButtonLink } from "@/components/ui/button-link";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { featuredProjects, lineContact, processSteps, services, testimonials } from "@/data/site";
 
+function ServiceIcon({ kind }: { kind: "floor" | "curtain" | "quote" }) {
+  if (kind === "floor") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+        <path d="M8 4.5v15" />
+        <path d="M13 4.5v15" />
+        <path d="M3.5 9.5h17" />
+      </svg>
+    );
+  }
+
+  if (kind === "curtain") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <path d="M4 6h16" />
+        <path d="M7 6v12c1.2-.5 2-.5 3 0V6" />
+        <path d="M14 6v12c1-.5 1.8-.5 3 0V6" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="5" y="3.5" width="14" height="17" rx="2.5" />
+      <path d="M9 8.5h6" />
+      <path d="M9 12h6" />
+      <path d="M9 15.5h4" />
+    </svg>
+  );
+}
+
 export default function HomePage() {
   return (
     <>
@@ -35,7 +67,7 @@ export default function HomePage() {
             <div className="absolute -right-8 bottom-0 h-36 w-36 rounded-full bg-latte/50 blur-3xl" />
             <div className="card-surface relative overflow-hidden rounded-[36px] p-3">
               <Image
-                src="https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
+                src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80"
                 alt="溫暖自然的居家空間"
                 width={960}
                 height={720}
@@ -63,8 +95,8 @@ export default function HomePage() {
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {services.map((service, index) => (
               <div key={service.title} className="card-surface p-7">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sand text-lg font-semibold text-stone">
-                  0{index + 1}
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sand text-stone">
+                  <ServiceIcon kind={index === 0 ? "floor" : index === 1 ? "curtain" : "quote"} />
                 </div>
                 <h3 className="mt-5 text-xl font-semibold text-stone">{service.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-stone/75">{service.description}</p>
