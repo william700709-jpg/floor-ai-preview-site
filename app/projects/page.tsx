@@ -8,14 +8,14 @@ const extraProjects = [
     style: "超耐磨地板 + 紗簾",
     description: "客餐廳採同色系延伸，讓採光感與開闊感同時放大。",
     image:
-      "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80"
   },
   {
     title: "沉穩灰綠臥室",
     style: "遮光布簾 + 木質地坪",
     description: "以低飽和綠和柔灰為主調，保留睡眠空間需要的靜謐。",
     image:
-      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
+      "https://images.unsplash.com/photo-1448630360428-65456885c650?auto=format&fit=crop&w=1200&q=80"
   },
   {
     title: "柔光親子房",
