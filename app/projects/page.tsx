@@ -7,19 +7,19 @@ const extraProjects = [
     title: "日系奶油宅",
     style: "SPC 地板 + 紗簾",
     description: "以淺色地坪與透光紗簾帶出奶油系空間感，整體看起來更輕盈。",
-    image: "/images/projects/dining-sheer-curtain.svg"
+    image: "/images/projects/project-4-cream-home.png"
   },
   {
     title: "沉穩灰綠臥室",
     style: "遮光布簾 + 木質地坪",
     description: "灰綠主牆搭配遮光布簾與木紋地板，讓臥室更有包覆感與休息氛圍。",
-    image: "/images/projects/green-bedroom-blackout.svg"
+    image: "/images/projects/project-5-gray-bedroom.png"
   },
   {
     title: "柔光親子房",
     style: "調光簾 + SPC 地板",
     description: "調光簾方便依時段調整採光，搭配 SPC 地板也更適合日常清潔整理。",
-    image: "/images/projects/kids-room-zebra.svg"
+    image: "/images/projects/project-6-kids-room.png"
   }
 ];
 

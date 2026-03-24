@@ -46,19 +46,19 @@ export const featuredProjects = [
     title: "奶茶木質感客廳",
     category: "SPC 木紋地板",
     description: "以奶茶木紋地板搭配暖米色家具，讓客廳保有溫潤感也更好整理。",
-    image: "/images/projects/spc-living-room.svg"
+    image: "/images/projects/project-1-living.png"
   },
   {
     title: "柔光臥室窗景",
     category: "雙層窗簾",
     description: "白紗搭配遮光布簾，白天保留柔光，夜晚也能維持完整隱私。",
-    image: "/images/projects/bedroom-double-curtain.svg"
+    image: "/images/projects/project-2-bedroom.png"
   },
   {
     title: "靜謐書房配置",
     category: "SPC 地板 + 捲簾",
     description: "木紋地板搭配可調光的捲簾，讓工作與閱讀空間看起來更乾淨安定。",
-    image: "/images/projects/study-floor-blind.svg"
+    image: "/images/projects/project-3-study.png"
   }
 ];
 
