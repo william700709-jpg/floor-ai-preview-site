@@ -42,8 +42,8 @@ export default function ProjectsPage() {
                 src={project.image}
                 alt={project.title}
                 width={874}
-                height={470}
-                className="aspect-[874/470] w-full object-cover"
+                height={520}
+                className="aspect-[874/520] w-full object-cover"
               />
               <div className="p-6">
                 <p className="text-sm uppercase tracking-[0.22em] text-clay">
