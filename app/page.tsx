@@ -67,8 +67,8 @@ export default function HomePage() {
             <div className="absolute -right-8 bottom-0 h-36 w-36 rounded-full bg-latte/50 blur-3xl" />
             <div className="card-surface relative overflow-hidden rounded-[36px] p-3">
               <Image
-                src="/images/home/hero-kitchen.jpg"
-                alt="木質廚房與窗簾搭配的溫馨居家空間"
+                src="/images/home/hero-kitchen-modern.jpg"
+                alt="白色廚房與地板搭配的明亮居家空間"
                 width={960}
                 height={720}
                 className="h-[460px] w-full rounded-[30px] object-cover"
