@@ -154,6 +154,18 @@ def seed_quote_products(db: Session) -> None:
             "minimum_charge": 5200,
         },
         {
+            "category": "floor",
+            "form": "pvc",
+            "code": "PVC-OAK-LIGHT",
+            "name": "PVC 地板 淺橡木",
+            "unit_label": "坪",
+            "price_per_square_meter": 1680,
+            "fullness_factor": 1.0,
+            "rail_price_per_meter": 0,
+            "labor_price": 480,
+            "minimum_charge": 3200,
+        },
+        {
             "category": "other",
             "form": "other",
             "code": "CUSTOM-OTHER",
