@@ -2,7 +2,14 @@
 .github
 .next
 node_modules
-backend
 docs
 README.md
-Dockerfile.preview-api
+backend
+!backend/
+!backend/requirements.txt
+!backend/app/
+!backend/app/**
+!backend/schema.sql
+!backend/storage/
+!backend/storage/floor-style-groups/
+!backend/storage/floor-style-groups/**
