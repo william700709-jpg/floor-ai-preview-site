@@ -1,6 +1,5 @@
 FROM node:22-slim
 
-ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app
@@ -11,6 +10,8 @@ RUN npm ci
 COPY . .
 
 RUN npm run build
+
+ENV NODE_ENV=production
 
 EXPOSE 3000
 
