@@ -46,7 +46,7 @@ function formLabel(form: string) {
     roller: "捲簾",
     daynight: "調光簾",
     spc: "SPC 地板",
-    pvc: "PVC 地板",
+    pvc: "PVC地板",
     laminate: "超耐磨地板",
     engineered: "海島型木地板",
     other: "其他",
