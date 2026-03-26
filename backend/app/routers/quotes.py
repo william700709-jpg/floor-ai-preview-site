@@ -46,7 +46,7 @@ def _setting_value(setting: QuoteFormulaSetting | None, field: str, fallback: fl
 
 def _product_display_name(product: QuoteProduct) -> str:
     name = (product.name or "").strip()
-    if product.form == "pvc" or name.lower() == "pvc":
+    if product.form == "pvc" or name.lower() == "pvc" or name.startswith("PVC地板"):
         return "PVC地板"
     return name or product.form
 

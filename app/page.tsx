@@ -2,7 +2,7 @@ import { ContactForm } from "@/components/forms/contact-form";
 import Image from "next/image";
 import { ButtonLink } from "@/components/ui/button-link";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { featuredProjects, lineContact, processSteps, services, testimonials } from "@/data/site";
+import { featuredProjects, processSteps, services, testimonials } from "@/data/site";
 
 function ServiceIcon({ kind }: { kind: "floor" | "curtain" | "quote" }) {
   if (kind === "floor") {
@@ -42,22 +42,22 @@ export default function HomePage() {
       <section className="section-space overflow-hidden">
         <div className="container-shell grid items-center gap-10 lg:grid-cols-[1.05fr,0.95fr]">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-clay">Warm, Natural, Lasting</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-clay">溫暖，自然，永恆</p>
             <h1 className="mt-5 text-5xl font-semibold leading-tight tracking-tight text-stone sm:text-6xl">
-              打造舒服耐看的
+              打造自然舒適的
               <br />
-              理想居家空間
+              溫馨居家空間
             </h1>
             <p className="mt-6 max-w-xl text-base leading-8 text-stone/75 sm:text-lg">
-              從地板到窗簾，提供溫暖、自然、安心的空間規劃與報價服務
+              從地板到窗簾，我們提供一站式溫暖、自然、安心的空間規劃與精準報價服務。
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <ButtonLink href="/curtain-quote">線上報價</ButtonLink>
               <ButtonLink href="/projects" variant="secondary">
                 查看案例
               </ButtonLink>
-              <ButtonLink href={lineContact.href} variant="ghost">
-                加入 LINE
+              <ButtonLink href="/contact" variant="ghost">
+                立即預約
               </ButtonLink>
             </div>
           </div>
@@ -67,8 +67,8 @@ export default function HomePage() {
             <div className="absolute -right-8 bottom-0 h-36 w-36 rounded-full bg-latte/50 blur-3xl" />
             <div className="card-surface relative overflow-hidden rounded-[36px] p-3">
               <Image
-                src="https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80"
-                alt="溫暖自然的居家空間"
+                src="/images/home/hero-kitchen.jpg"
+                alt="木質廚房與窗簾搭配的溫馨居家空間"
                 width={960}
                 height={720}
                 className="h-[460px] w-full rounded-[30px] object-cover"

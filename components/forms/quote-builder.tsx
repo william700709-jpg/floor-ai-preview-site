@@ -156,11 +156,11 @@ function productLabel(product: Pick<QuoteProduct, "form" | "name"> | null) {
     return "--";
   }
 
-  const normalizedName = product.name.trim();
-  if (product.form === "pvc" || normalizedName.toLowerCase() === "pvc") {
-    return "PVC地板";
+  if (["spc", "pvc", "laminate", "engineered"].includes(product.form)) {
+    return formLabel(product.form);
   }
 
+  const normalizedName = product.name.trim();
   return normalizedName || formLabel(product.form);
 }
 
@@ -376,7 +376,11 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
           throw new Error("無法載入報價設定資料。");
         }
 
-        const productsData: QuoteProduct[] = await productsResponse.json();
+        const productsData: QuoteProduct[] = ((await productsResponse.json()) as QuoteProduct[]).map((product) =>
+          product.form === "pvc" || product.name.trim().toLowerCase() === "pvc"
+            ? { ...product, name: "PVC地板" }
+            : product
+        );
         const formulasData: { items: QuoteFormulaSetting[] } = await formulasResponse.json();
 
         if (!active) {

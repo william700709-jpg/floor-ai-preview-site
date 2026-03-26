@@ -157,7 +157,7 @@ def seed_quote_products(db: Session) -> None:
             "category": "floor",
             "form": "pvc",
             "code": "PVC-OAK-LIGHT",
-            "name": "PVC地板 淺橡木",
+            "name": "PVC地板",
             "unit_label": "坪",
             "price_per_square_meter": 1680,
             "fullness_factor": 1.0,
