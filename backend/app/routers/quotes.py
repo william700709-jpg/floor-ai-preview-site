@@ -44,6 +44,13 @@ def _setting_value(setting: QuoteFormulaSetting | None, field: str, fallback: fl
     return Decimal(str(raw_value))
 
 
+def _product_display_name(product: QuoteProduct) -> str:
+    name = (product.name or "").strip()
+    if product.form == "pvc" or name.lower() == "pvc":
+        return "PVC地板"
+    return name or product.form
+
+
 def _calculate_curtain_item(
     product: QuoteProduct,
     setting: QuoteFormulaSetting | None,
@@ -209,7 +216,7 @@ def list_quote_products(
             category=row.category,
             form=row.form,
             code=row.code,
-            name=row.name,
+            name=_product_display_name(row),
             unit_label=row.unit_label,
             price_per_square_meter=float(row.price_per_square_meter),
             fullness_factor=float(row.fullness_factor),
@@ -348,13 +355,13 @@ def create_quote(payload: QuoteCreateIn, db: Session = Depends(get_db)) -> Quote
                 quantity=item.quantity,
                 material_unit_price=material_unit_price,
             )
-            product_name = product.name
+            product_name = _product_display_name(product)
         elif product.category == "floor":
             unit_price, subtotal, summary, pricing_unit = _calculate_floor_item(
                 quantity=item.quantity,
                 material_unit_price=material_unit_price,
             )
-            product_name = product.name
+            product_name = _product_display_name(product)
         elif product.category == "other":
             custom_product_name = (item.custom_product_name or "").strip()
             custom_unit = (item.custom_unit or "").strip()

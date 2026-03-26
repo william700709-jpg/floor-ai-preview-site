@@ -151,6 +151,19 @@ function formLabel(form: string) {
   return formMap[form] ?? form;
 }
 
+function productLabel(product: Pick<QuoteProduct, "form" | "name"> | null) {
+  if (!product) {
+    return "--";
+  }
+
+  const normalizedName = product.name.trim();
+  if (product.form === "pvc" || normalizedName.toLowerCase() === "pvc") {
+    return "PVC地板";
+  }
+
+  return normalizedName || formLabel(product.form);
+}
+
 function categoryLabel(category: QuoteCategory) {
   const labels: Record<QuoteCategory, string> = {
     curtain: "窗簾",
@@ -625,7 +638,7 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
           const preview = previews[index];
           const isFloorItem = item.category === "floor";
           const isOtherItem = item.category === "other";
-          const displayStyle = isOtherItem ? item.customProductName.trim() || "尚未填寫" : product ? formLabel(product.form) : "--";
+          const displayStyle = isOtherItem ? item.customProductName.trim() || "尚未填寫" : productLabel(product);
 
           return (
             <div key={item.id} className="card-surface p-6 sm:p-8">
@@ -684,14 +697,14 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
                     <select
                       value={item.productId ?? ""}
                       onChange={(event) => updateItem(item.id, { productId: Number(event.target.value) })}
-                      className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
-                    >
-                      {productOptions.map((entry) => (
-                        <option key={entry.id} value={entry.id}>
-                          {formLabel(entry.form)}
-                        </option>
-                      ))}
-                    </select>
+                        className="mt-2 w-full rounded-2xl border border-stone/10 bg-white px-4 py-3 text-stone outline-none focus:border-sage"
+                      >
+                        {productOptions.map((entry) => (
+                          <option key={entry.id} value={entry.id}>
+                            {productLabel(entry)}
+                          </option>
+                        ))}
+                      </select>
                   </label>
                 )}
 
