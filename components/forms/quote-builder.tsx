@@ -88,6 +88,52 @@ function formatCurrency(value: number) {
   return `NT$ ${Math.round(value).toLocaleString("zh-TW")}`;
 }
 
+function parseApiError(payload: unknown) {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  const detail = (payload as { detail?: unknown }).detail;
+
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((entry) => {
+        if (!entry || typeof entry !== "object") {
+          return null;
+        }
+
+        const message = "msg" in entry && typeof entry.msg === "string" ? entry.msg : null;
+        const location = Array.isArray((entry as { loc?: unknown }).loc)
+          ? (entry as { loc: unknown[] }).loc
+              .filter((part) => part !== "body")
+              .map((part) => String(part))
+              .join(".")
+          : "";
+
+        if (!message) {
+          return null;
+        }
+
+        if (location === "items.0.quantity" || location.endsWith(".quantity")) {
+          return "數量超出目前允許範圍，請調整後再送出。";
+        }
+
+        return location ? `${location}：${message}` : message;
+      })
+      .filter((value): value is string => Boolean(value));
+
+    if (messages.length > 0) {
+      return messages.join("；");
+    }
+  }
+
+  return null;
+}
+
 function formLabel(form: string) {
   const formMap: Record<string, string> = {
     fabric: "布簾",
@@ -484,8 +530,8 @@ export function QuoteBuilder({ defaultCategory }: QuoteBuilderProps) {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { detail?: string } | null;
-        throw new Error(payload?.detail ?? "送出報價單失敗。");
+        const payload = await response.json().catch(() => null);
+        throw new Error(parseApiError(payload) ?? "送出報價單失敗。");
       }
 
       const quote: SavedQuote = await response.json();

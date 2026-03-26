@@ -169,7 +169,7 @@ class QuoteItemCreateIn(BaseModel):
     material_unit_price: float | None = Field(default=None, gt=0)
     width_cm: float = Field(default=0, ge=0)
     height_cm: float = Field(default=0, ge=0)
-    quantity: int = Field(default=1, ge=1, le=99)
+    quantity: int = Field(default=1, ge=1)
     notes: str | None = None
 
 
