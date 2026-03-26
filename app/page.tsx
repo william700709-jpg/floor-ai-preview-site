@@ -68,18 +68,12 @@ export default function HomePage() {
             <div className="card-surface relative overflow-hidden rounded-[36px] p-3">
               <Image
                 src="/images/home/hero-kitchen-modern.jpg"
-                alt="白色廚房與地板搭配的明亮居家空間"
+                alt="溫暖木質廚房與窗簾搭配的居家空間"
                 width={960}
                 height={720}
                 className="h-[460px] w-full rounded-[30px] object-cover"
                 priority
               />
-              <div className="absolute bottom-8 left-8 right-8 rounded-[28px] bg-white/82 p-5 backdrop-blur">
-                <p className="text-sm font-medium text-stone">空間顧問陪你一起抓預算、選材質、定風格</p>
-                <p className="mt-2 text-sm leading-6 text-stone/70">
-                  先試算，再安排丈量與正式報價，讓裝修決策更清楚也更安心。
-                </p>
-              </div>
             </div>
           </div>
         </div>
