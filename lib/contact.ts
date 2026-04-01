@@ -10,6 +10,14 @@ export type ContactPayload = {
   sizeInfo?: string;
   message?: string;
   source?: string;
+  attachments?: ContactAttachmentPayload[];
+};
+
+export type ContactAttachmentPayload = {
+  name?: string;
+  type?: string;
+  size?: number;
+  category?: string;
 };
 
 export type NormalizedContactPayload = {
@@ -23,6 +31,7 @@ export type NormalizedContactPayload = {
   message: string;
   source: string;
   createdAt: string;
+  attachments: ContactAttachmentPayload[];
 };
 
 export function normalizeContactPayload(
@@ -39,7 +48,15 @@ export function normalizeContactPayload(
     sizeInfo: payload.sizeInfo?.trim() ?? "",
     message: payload.message?.trim() ?? "",
     source: payload.source?.trim() ?? "unknown",
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    attachments: Array.isArray(payload.attachments)
+      ? payload.attachments.map((attachment) => ({
+          name: attachment.name?.trim() ?? "",
+          type: attachment.type?.trim() ?? "",
+          size: attachment.size ?? 0,
+          category: attachment.category?.trim() ?? "",
+        }))
+      : [],
   };
 }
 
@@ -64,7 +81,8 @@ export async function sendToGoogleSheetsWebhook(payload: NormalizedContactPayloa
       "Content-Type": "application/json"
     },
     body: JSON.stringify(payload),
-    cache: "no-store"
+    cache: "no-store",
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {

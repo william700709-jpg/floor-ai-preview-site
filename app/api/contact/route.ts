@@ -7,6 +7,12 @@ import {
 } from "@/lib/contact";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_PREVIEW_API_BASE_URL;
+const REQUEST_TIMEOUT_MS = 10_000;
+const attachmentCategoryLabel: Record<string, string> = {
+  space: "空間照片",
+  window: "窗戶照片",
+  plan: "平面圖或尺寸草圖",
+};
 
 export async function POST(request: Request) {
   const body = (await request.json()) as ContactPayload;
@@ -28,6 +34,16 @@ export async function POST(request: Request) {
       throw new Error("缺少 NEXT_PUBLIC_PREVIEW_API_BASE_URL");
     }
 
+    const attachmentSummary =
+      payload.attachments.length > 0
+        ? `\n\n附件資訊：\n${payload.attachments
+            .map(
+              (attachment) =>
+                `- ${attachmentCategoryLabel[attachment.category || ""] ?? attachment.category ?? "未分類"} / ${attachment.name || "未命名檔案"}`,
+            )
+            .join("\n")}`
+        : "";
+
     const response = await fetch(`${API_BASE_URL}/contact-requests`, {
       method: "POST",
       headers: {
@@ -41,10 +57,11 @@ export async function POST(request: Request) {
         request_type: payload.requestType,
         installation_address: payload.installationAddress || null,
         size_info: payload.sizeInfo || null,
-        message: payload.message,
+        message: `${payload.message}${attachmentSummary}`,
         source: payload.source
       }),
-      cache: "no-store"
+      cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
 
     if (!response.ok) {
