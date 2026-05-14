@@ -74,10 +74,20 @@ def stock_rebuild_features(
 def get_stock_features(
     trade_date: date | None = Query(default=None),
     symbols: list[str] = Query(default_factory=list),
+    top_market_cap_n: int | None = Query(default=None, ge=1, le=500),
+    sort_by: str | None = Query(default=None, description="Set to 'bias_20d_pct' to sort by MA20 deviation ascending"),
     limit: int = Query(default=50, ge=1, le=500),
     db: Session = Depends(get_db),
 ) -> StockFeatureListOut:
-    rows = list_features(db, trade_date=trade_date, symbols=symbols or None, limit=limit)
+    sort_by_bias_20d_pct = sort_by == "bias_20d_pct"
+    rows = list_features(
+        db,
+        trade_date=trade_date,
+        symbols=symbols or None,
+        top_market_cap_n=top_market_cap_n,
+        sort_by_bias_20d_pct=sort_by_bias_20d_pct,
+        limit=limit,
+    )
     return StockFeatureListOut(
         items=[
             StockFeatureOut(
@@ -90,6 +100,7 @@ def get_stock_features(
                 else None,
                 vwap_20=float(feature.vwap_20) if feature.vwap_20 is not None else None,
                 bias_10d_pct=float(feature.bias_10d_pct) if feature.bias_10d_pct is not None else None,
+                bias_20d_pct=float(feature.bias_20d_pct) if feature.bias_20d_pct is not None else None,
                 annualized_volatility_pct=float(feature.annualized_volatility_pct)
                 if feature.annualized_volatility_pct is not None
                 else None,
@@ -98,7 +109,8 @@ def get_stock_features(
                 else None,
                 total_score=feature.total_score,
                 strategy_tier=feature.strategy_tier,
+                market_cap=float(market_cap) if market_cap is not None else None,
             )
-            for feature, symbol in rows
+            for feature, symbol, market_cap in rows
         ]
     )

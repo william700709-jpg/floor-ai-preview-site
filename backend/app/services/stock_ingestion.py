@@ -125,6 +125,7 @@ def _upsert_symbols(db: Session, symbols: list[StockSymbolIn]) -> dict[str, int]
                     "symbol": item.symbol,
                     "market": item.market,
                     "name": item.name,
+                    "market_cap": item.market_cap,
                     "is_active": item.is_active,
                     "updated_at": datetime.utcnow(),
                 }
@@ -136,6 +137,7 @@ def _upsert_symbols(db: Session, symbols: list[StockSymbolIn]) -> dict[str, int]
             set_={
                 "market": stmt.excluded.market,
                 "name": stmt.excluded.name,
+                "market_cap": stmt.excluded.market_cap,
                 "is_active": stmt.excluded.is_active,
                 "updated_at": datetime.utcnow(),
             },
@@ -293,6 +295,11 @@ def _compute_feature_row(
     if avg_close_10 > 0:
         bias_10d_pct = ((float(row.close_price) - avg_close_10) / avg_close_10) * 100
 
+    avg_close_20 = sum(float(item.close_price) for item in price_window_20) / len(price_window_20)
+    bias_20d_pct = None
+    if avg_close_20 > 0:
+        bias_20d_pct = ((float(row.close_price) - avg_close_20) / avg_close_20) * 100
+
     annualized_volatility_pct = _annualized_volatility_pct(
         [float(item.close_price) for item in price_window_20]
     )
@@ -342,6 +349,7 @@ def _compute_feature_row(
         "amplitude_10d_pct": _round_or_none(amplitude_10d_pct),
         "vwap_20": _round_or_none(vwap_20),
         "bias_10d_pct": _round_or_none(bias_10d_pct),
+        "bias_20d_pct": _round_or_none(bias_20d_pct),
         "annualized_volatility_pct": _round_or_none(annualized_volatility_pct),
         "fair_value_discount_pct": _round_or_none(revenue_yoy_pct),
         "total_score": int(score),
@@ -414,6 +422,7 @@ def rebuild_features(db: Session, payload: StockRebuildFeaturesIn) -> int:
                     "amplitude_10d_pct": stmt.excluded.amplitude_10d_pct,
                     "vwap_20": stmt.excluded.vwap_20,
                     "bias_10d_pct": stmt.excluded.bias_10d_pct,
+                    "bias_20d_pct": stmt.excluded.bias_20d_pct,
                     "annualized_volatility_pct": stmt.excluded.annualized_volatility_pct,
                     "fair_value_discount_pct": stmt.excluded.fair_value_discount_pct,
                     "total_score": stmt.excluded.total_score,
@@ -531,16 +540,37 @@ def list_features(
     db: Session,
     trade_date: date | None = None,
     symbols: list[str] | None = None,
+    top_market_cap_n: int | None = None,
+    sort_by_bias_20d_pct: bool = False,
     limit: int = 50,
 ):
     stmt = (
-        select(StockDailyFeature, StockSymbol.symbol)
+        select(StockDailyFeature, StockSymbol.symbol, StockSymbol.market_cap)
         .join(StockSymbol, StockSymbol.id == StockDailyFeature.symbol_id)
-        .order_by(StockDailyFeature.trade_date.desc(), StockSymbol.symbol)
-        .limit(limit)
     )
+
     if trade_date:
         stmt = stmt.where(StockDailyFeature.trade_date == trade_date)
     if symbols:
         stmt = stmt.where(StockSymbol.symbol.in_(symbols))
+
+    if top_market_cap_n:
+        top_ids_subq = (
+            select(StockSymbol.id)
+            .where(StockSymbol.market_cap.is_not(None))
+            .order_by(StockSymbol.market_cap.desc())
+            .limit(top_market_cap_n)
+            .subquery()
+        )
+        stmt = stmt.where(StockDailyFeature.symbol_id.in_(top_ids_subq))
+
+    if sort_by_bias_20d_pct:
+        stmt = stmt.order_by(
+            StockDailyFeature.trade_date.desc(),
+            StockDailyFeature.bias_20d_pct.asc().nulls_last(),
+        )
+    else:
+        stmt = stmt.order_by(StockDailyFeature.trade_date.desc(), StockSymbol.symbol)
+
+    stmt = stmt.limit(limit)
     return db.execute(stmt).all()

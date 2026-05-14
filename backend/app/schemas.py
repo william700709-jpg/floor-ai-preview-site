@@ -224,6 +224,7 @@ class StockSymbolIn(BaseModel):
     symbol: str
     market: str = "TWSE"
     name: str | None = None
+    market_cap: float | None = None
     is_active: bool = True
 
 
@@ -297,10 +298,12 @@ class StockFeatureOut(BaseModel):
     amplitude_10d_pct: float | None
     vwap_20: float | None
     bias_10d_pct: float | None
+    bias_20d_pct: float | None
     annualized_volatility_pct: float | None
     fair_value_discount_pct: float | None
     total_score: int | None
     strategy_tier: str | None
+    market_cap: float | None
 
 
 class StockFeatureListOut(BaseModel):

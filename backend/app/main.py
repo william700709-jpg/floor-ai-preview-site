@@ -28,6 +28,8 @@ async def lifespan(app: FastAPI):
         connection.execute(text("ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS pricing_unit VARCHAR(20)"))
         connection.execute(text("ALTER TABLE quote_items ADD COLUMN IF NOT EXISTS material_unit_price NUMERIC(12, 2)"))
         connection.execute(text("ALTER TABLE quote_formula_settings ADD COLUMN IF NOT EXISTS fabric_multiplier NUMERIC(8, 2)"))
+        connection.execute(text("ALTER TABLE stock_symbols ADD COLUMN IF NOT EXISTS market_cap NUMERIC(24, 2)"))
+        connection.execute(text("ALTER TABLE stock_daily_features ADD COLUMN IF NOT EXISTS bias_20d_pct NUMERIC(8, 4)"))
     with SessionLocal() as db:
         seed_floor_styles(db)
         seed_quote_products(db)

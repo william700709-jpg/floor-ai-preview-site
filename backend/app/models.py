@@ -180,6 +180,7 @@ class StockSymbol(Base):
     symbol: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     market: Mapped[str] = mapped_column(String(20), default="TWSE")
     name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    market_cap: Mapped[float | None] = mapped_column(Numeric(24, 2), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
@@ -259,6 +260,7 @@ class StockDailyFeature(Base):
     amplitude_10d_pct: Mapped[float | None] = mapped_column(Numeric(8, 4), nullable=True)
     vwap_20: Mapped[float | None] = mapped_column(Numeric(12, 4), nullable=True)
     bias_10d_pct: Mapped[float | None] = mapped_column(Numeric(8, 4), nullable=True)
+    bias_20d_pct: Mapped[float | None] = mapped_column(Numeric(8, 4), nullable=True)
     annualized_volatility_pct: Mapped[float | None] = mapped_column(Numeric(8, 4), nullable=True)
     fair_value_discount_pct: Mapped[float | None] = mapped_column(Numeric(12, 4), nullable=True)
     total_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
