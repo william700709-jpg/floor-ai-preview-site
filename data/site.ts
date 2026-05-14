@@ -3,6 +3,7 @@ export const navItems = [
   { href: "/curtain-quote", label: "線上報價" },
   { href: "/floor-ai-preview", label: "AI 地板預覽" },
   { href: "/projects", label: "案例作品" },
+  { href: "/stocks", label: "股票觀察" },
   { href: "/about", label: "關於我們" },
   { href: "/contact", label: "聯絡我們" }
 ];
